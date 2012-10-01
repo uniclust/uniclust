@@ -1,0 +1,128 @@
+#!/usr/bin/perl
+
+###############################################################
+#  ompsubmit -- script for submitting simple omp jobs to LL   #
+#                via ' llsubmit - '                           #
+###############################################################
+
+use Getopt::Long;
+
+sub printHelp;
+
+my $submit_file_name; # file name or filter to stream commands out
+my $shell_path = '/bin/bash';
+my $default_host = 'regatta';
+chomp (my $user_name = `whoami`);
+
+# job file parameters
+my %cmd =(	'processors' => '1', # nubmer of processes
+		'wall time' => '00:10:00', #wall time limit
+		'efile' => '', #file to execute
+
+		'args' => '', #its argument
+
+		'home' => '', # working directory path		
+		'in' => '', # file stdin flows from
+		'out' => '$(jobid).out', # file stdout flows to
+		'err' => '$(jobid).err', # file stderr flows to
+
+		'notify' => 'never', # notify in case of
+		'mail to' => '', # send notifications to
+	);				
+
+
+
+$submit_file_name = "| /opt/ibmll/LoadL/full/bin/llsubmit - ";
+#$submit_file_name = "| cat ";
+
+# parse command line
+GetOptions (	'nproc=i' => \$cmd{"processors"},
+		'wtime=s' => \$cmd{"wall time"},
+
+		'mailto=s' => \$cmd{"mail to"},
+		'stdin=s' => \$cmd{"in"},
+		'stdout=s' => \$cmd{"out"},
+		'stderr=s' => \$cmd{"err"},
+
+		'help' => sub {printHelp;}
+	);
+
+($cmd{"efile"}, @tags) = @ARGV;
+
+foreach (@tags)
+	{
+	$cmd{"args"} .= ' '.$_;
+	}
+
+( $cmd{"efile"} ) ||
+	( warn ("error: you should specify executable\n") && printHelp);
+
+$efile_name = (split /\//, $cmd{"efile"} ) [-1];
+$cmd{"out"} = "$efile_name." . $cmd{"out"}
+	if ( $cmd{"out"} =~ /\$\(jobid\)\.out/ );
+$cmd{"err"} = "$efile_name." . $cmd{"err"}
+	if ( $cmd{"err"} =~ /\$\(jobid\)\.err/ );
+
+
+( $cmd{"processors"} > 0 &&  $cmd{"processors"} <= 16 ) ||
+	die "error: number of processes shoud be between 1 and 16\n";
+
+#$cmd{"mail to"} = "$user_name\@$default_host" unless $cmd{"mail to"}; 
+
+
+# if everything is fine -- submitting...
+
+open (SUBMIT_STREAM, $submit_file_name);
+#write (SUBMIT_STREAM);
+
+select SUBMIT_STREAM;
+print "#!$shell_path\n";
+print "#########################################################\n";
+print "# this file was automaticly created by ompsubmit script #\n";
+print "#########################################################\n";
+
+print "# required parameters\n";
+print "# @\tresources = ConsumableCpus(", $cmd{"processors"}, ")\n";
+print "# @\twall_clock_limit = ", $cmd{"wall time"}, "\n";
+print "# @\texecutable = ", $cmd{"efile"}, "\n";
+print "# @\tclass = test_class\n";
+print "# desired parameters\n";
+print "# @\tenvironment = COPY_ALL; OMP_NUM_THREADS=", $cmd{"processors"}, "\n";
+print "# @\tinput = ", $cmd{"in"}, "\n";
+print "# @\toutput = ", $cmd{"out"}, "\n";
+print "# @\terror = ", $cmd{"err"}, "\n";
+print "# @\targuments = ", $cmd{"args"}, "\n";
+
+print "# @\tnotification = ", $cmd{"notify"}, "\n";
+#print "# @\tnotify_user = ", $cmd{"mail to"}, "\n";
+
+#print "# @\tcheckpoint = interval\n";
+#print "# @\tckpt_dir = /checkpoints\n";
+
+print "# submit to queue\n";
+print "# @\tqueue\n";
+
+close (SUBMIT_STREAM);
+
+# here's the usage information printing sub
+sub printHelp
+{
+warn ("usage: ompsubmit {<option_value_pair>} <executable to submit> <args>\n");
+warn (" where <option_value_pair> could be:\n");
+warn ("\t( -n | --nproc ) <number of processes to run at>,\n\t\tdefault is 1\n");
+warn ("\t( -w | --wtime ) <wall clock limit>,\n\t\tdefault is 00:10:00\n");
+
+warn ("\t( -m | --mailto ) <e-mail to send notifications to>,\n\t\tdefault is yourname\@regatta\n");
+
+warn ("\t --stdout <file to direct stdout to>,\n\t\tdefault is '<exec>.\$(jobid).out'\n");
+warn ("\t --stderr <file to direct sterr to>,\n\t\tdefault is '<exec>.\$(jobid).err'\n");
+warn ("\t --stdin <file to direct stdin from>,\n\t\tno default\n");
+
+warn ("\t( -h | --help ) prints this message out\n");
+
+die ("\ni.e. ompsubmit -w 00:30:00 -n 16 a.out 0.01\n");
+}
+
+# here is the commonly used format of a cmd file
+
+

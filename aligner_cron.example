@@ -1,0 +1,3 @@
+SHELL=/bin/bash
+# m h dom mon dow command
+*/5 *  *   *   *  python full_path_to_server_py/server.py 2>&1 | cat >> full_path_to_run_log/run.log

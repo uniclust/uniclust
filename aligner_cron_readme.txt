@@ -1,0 +1,1 @@
+Set the right paths in aligner_cron.example and then type in console "crontab -u <user> aligner_cron.example"

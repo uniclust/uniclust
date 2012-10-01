@@ -1,0 +1,35 @@
+#
+# Options for Mysql Database
+#
+db_host="localhost"
+db_user="aligner"
+db_name="aligner"
+db_passwd="password"
+
+#
+# Full(!) path to 'server.py' locking file
+#
+lock_path="/path/to/server.py.lock"
+
+#
+# Full(!) path to upcoming task data
+#
+data_path="/archive/data/aligner"
+
+#
+# UNIX group
+#
+local_group="aligner"
+
+#
+# See "website/etc/global_vars.php.example" for explanations
+#
+site_address="example.host"
+
+path_on_site="/aligner"
+#
+
+#
+# For 'backfill' algorithm
+#
+timeout_server=300

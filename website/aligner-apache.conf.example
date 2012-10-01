@@ -1,0 +1,20 @@
+
+    Alias /aligner/ "/archive/www/aligner_site/website/site/"
+    <Directory /archive/www/aligner_site/website/site/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+   </Directory>
+
+
+    Alias /aligner-data/ "/archive/data/aligner/"
+    <Directory /archive/data/aligner/>
+		Options FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+   </Directory>
+
+
+

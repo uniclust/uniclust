@@ -1,0 +1,50 @@
+BODY
+{
+  BACKGROUND-COLOR: white;
+  COLOR: black;
+  FONT-SIZE: 12pt;
+  FONT-STYLE: normal
+}
+
+A:active
+{
+  COLOR: red
+}
+A:hover
+{
+  COLOR: blue
+}
+A:link
+{
+  COLOR: blue
+} 
+A:visited
+{
+  COLOR: #990099
+}
+TABLE
+{
+  BACKGROUND-COLOR: white
+}
+
+A.LTR5help
+{
+ color: black;
+ text-decoration: none
+}
+
+TD.general
+{
+	text-align: center
+}
+
+.page_name
+{
+	font-size: 18pt;
+	text-align: center
+}
+
+.genome_location
+{
+	font-size: 14pt
+}
