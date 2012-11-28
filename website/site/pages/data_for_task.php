@@ -58,11 +58,8 @@ $headers=array
 
 print_view_table_header($headers,"List of files:");
 
-if (
-    ($task_status=="new")      || 
-    ($task_status=="finished") ||
-    ($task_status=="refused") 
-   )
+if (($task_status=="new") || 
+    ($task_status=="finished"))
 {
 	for ($i=2;$i<$num_files;$i++)
 	{
@@ -80,7 +77,7 @@ if (
 			date(" j-F-Y G:H ",filemtime("$dir_path/$files[$i]")),
 			"<A href=\"../queries/delete_file.php?task_id=${task_id}&file_number=${i}\">delete</A>"
 		);
-		print_view_table_row($values,false);
+		print_view_table_row($values,False);
 	}
 }
 else
@@ -101,7 +98,7 @@ else
 			date(" j-F-Y G:H ",filemtime("$dir_path/$files[$i]")),
 			"delete"
 		);
-		print_view_table_row($values,false);
+		print_view_table_row($values);
 	}
 }
 print_view_table_tail();

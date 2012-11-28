@@ -31,7 +31,7 @@ function print_page_header($page_name,$www_prefix)
 <?
 	printf
 	(
-		"<A href=\"http://%s/%s\"><IMG src=\"%s/images/logotype.jpg\" height=\"100\" width=\"240\" alt=\"\" border=\"0\"></A>",
+		"<A href=\"http://%s/%s\"><IMG src=\"%s/images/logotype.jpg\" height=\"120\" width=\"240\" alt=\"\" border=\"0\"></A>",
 		$GLOBALS["HTTP_HOST"],
 		$GLOBALS["SITE_PATH"],
 		$www_prefix

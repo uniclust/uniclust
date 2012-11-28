@@ -56,11 +56,11 @@
 #                                                                           #
 #############################################################################
 
-MAKE=make
+MAKE=gmake
 PARUS_HOME=${HOME}/parus
 MUSCLE_PATH=${HOME}/bin/muscle
-SUBMIT_COMMAND="mpirun -q test"
-CLUSTALW_PATH=${HOME}/bin/clustalw-mpi
+SUBMIT_COMMAND=mpisubmit
+CLUSTALW_PATH=`which clustalw-mpi`
 
 
 function err()
@@ -77,12 +77,11 @@ then
 	echo " nucleotide or amino asid sequences."
 	echo ""
 	echo " The arguments are:"
-	echo "         make_align.sh align_name num_processors data.fasta minutes_to_work algorithm [ some_unique_number ]"
+	echo "         make_align.sh align_name num_processors data.fasta minutes_to_work"
 	echo " for example:"
-	echo "         ./schedule_make_align.sh ltr5 4 seq.fasta 3600 muscle 0"
+	echo "         ./schedule_make_align.sh ltr5 4 seq.fasta 3600 muscle"
 	echo ""
 	echo ""
-	echo "by default unique number will be 0"
 	echo "Your command line:"
 	echo "'$0 $@'"
 	echo ""
@@ -97,39 +96,26 @@ num_procs=$2;
 fasta_file=$3;
 minutes_to_work=$4;
 algorithm=$5;
-number=0;
-
-if (($# >= 6 ))
-then
- number=$6;
-fi
 
 echo ""
 echo "Align name: '$align_name'"
 echo "Number of processors: $num_procs"
 echo "Fasta file name: '$fasta_file'"
 echo "Algorithm: $algorithm"
-echo "Minutes to work: $minutes_to_work"
-echo "Unique number: $number"
 echo ""
 
-if ! [ -d $align_name ]
+if !  mkdir $align_name
 then
-	if !  mkdir $align_name
-	then
-		err
-	fi
+	err
 fi
 
 cd ./$align_name
 
 sed -e "s/[:,]/_/g" < ../$fasta_file  | sed -e "s/(/\{/g" | sed -e "s/)/\}/g" > $fasta_file 
 
-rm -f sbm.txt
-
 if [ "$algorithm" = "clustalw" ]
 then
-	if ! $SUBMIT_COMMAND -np $num_procs -maxtime $minutes_to_work $CLUSTALW_PATH  -infile=$fasta_file -outfile=result$number.fasta > sbm.txt
+	if ! $SUBMIT_COMMAND -np $num_procs -w 00:$minutes_to_work:00 $CLUSTALW_PATH -- -infile=$fasta_file -outfile=data_node_1.fasta > sbm.txt
 	then
 		echo "Submit to queue failed!"
 		err
@@ -143,7 +129,7 @@ then
 	if (($num_procs == 1))
 	then
 	
-		if ! $SUBMIT_COMMAND -np 1 -as single  -maxtime $minutes_to_work $MUSCLE_PATH  -in $fasta_file -out result$number.fasta -maxhours $((minutes_to_work/60)) > sbm.txt
+		if ! $SUBMIT_COMMAND -np 1 -w 00:$minutes_to_work:00 $MUSCLE_PATH -- -in $fasta_file -out data_node_1.fasta -maxhours $((minutes_to_work/60)) > sbm.txt
 		then
 			echo "Submit to queue failed!"
 			err
@@ -152,7 +138,7 @@ then
 
 	else
 	
-		if ! $MUSCLE_PATH -in $fasta_file -tree1 $align_name.tre -maxiters 1 -cluster1 upgma > /dev/null
+		if ! $MUSCLE_PATH -in $fasta_file -tree1 $align_name.tre -maxiters 1 -cluster1 upgmb > /dev/null
 		then
 			echo "Tree building failure!"
 			err
@@ -194,7 +180,7 @@ job_id=`grep "ID" sbm.txt | cut -f 6  -d ' ' | cut -f 2 -d '=' | cut -f 1 -d ')'
 #job_id=`grep "ID" sbm.txt | cut -f 3  -d '.' | cut -f 1 -d '"' `
 echo $job_id
 
-rm -f job_id.txt
+
 
 if [ "$job_id" = "" ]
 then

@@ -18,9 +18,6 @@ then
 	
 fi
 
-echo "rm data for aligner task $1"
-exit 0
-
 align_name=$1
 
 rm -f $align_name.err $align_name.fasta $align_name.tre

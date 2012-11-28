@@ -25,13 +25,16 @@ $task_id=(int)read_var("task_id","any");
 $tmp_file_name =  $_FILES["file"]["tmp_name"];
 $tmp_file_size =  $_FILES["file"]["size"];
 $tmp_file_error=  $_FILES["file"]["error"];
+$tmp_pdb_file_name = $_FILES["file1"]["tmp_name"];
+$tmp_txt_file_name = $_FILES["file2"]["tmp_name"];
 
-$result=db_query("select task_status,user_id from tasks where task_id=${task_id}");
+$result=db_query("select task_status,user_id,algorithm from tasks where task_id=${task_id}");
 if (!db_num_rows($result)) add_error("Task does not exist!");
 
 $data=db_fetch_assoc($result);
 $task_status=$data["task_status"];
 $user_id=$data["user_id"];
+$algorithm=$data["algorithm"];
 db_free_result($result);
 
 if ($user_id!=$authorized_user_id)
@@ -71,6 +74,10 @@ if (($tmp_file_name!="") && ($fasta!=""))
 db_query("update tasks set task_status='new',date_of_finishing=NULL  where task_id=$task_id");
 
 $file_path="${DATA_PATH}/${user_id}/${task_id}/sequences.fasta";
+$pdb_file_path="${DATA_PATH}/${user_id}/${task_id}/structure.pdb";
+$txt_file_path="${DATA_PATH}/${user_id}/${task_id}/selection.txt";
+
+
 
 $dir_name="${DATA_PATH}/${user_id}";
 if (!file_exists($dir_name))
@@ -106,9 +113,38 @@ if (!file_exists($dir_name))
 
 print_error("Errors","..");
 
+
+
+
+if ($algorithm == "FitProt")
+{
+	//add_error("This is FitProt!");
+	$flag=copy($tmp_pdb_file_name, $pdb_file_path);
+	$flag=copy($tmp_txt_file_name, $txt_file_path);
+	if (!chmod($pdb_file_path,0664))
+	{
+		add_error("Can't change permissions on file!");
+	}
+
+	if (!chgrp($pdb_file_path,$LOCAL_GROUP))
+	{	
+		add_error("Can't change group for file '$file_path' to the '$LOCAL_GROUP'!");
+	}	
+	if (!chmod($txt_file_path,0664))
+	{	
+		add_error("Can't change permissions on file!");
+	}
+
+	if (!chgrp($txt_file_path,$LOCAL_GROUP))
+	{	
+		add_error("Can't change group for file '$file_path' to the '$LOCAL_GROUP'!");
+	}
+}
 /*
  * Check attached file
  */
+else
+{
 if (($tmp_file_name!="") && ($fasta==""))
 {
 	
@@ -169,7 +205,7 @@ if (!chgrp($file_path,$LOCAL_GROUP))
 {
 	add_error("Can't change group for file '$file_path' to the '$LOCAL_GROUP'!");
 }
-
+}
 
 print_error("Errors","..");
 

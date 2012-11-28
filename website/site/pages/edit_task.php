@@ -50,7 +50,7 @@ if($authorized_user_id!=$user_id)
 	print_error("Edit task","");
 }
 
-$query="select multiprocessor_name,num_available_procs,multiprocessor_id from multiprocessors where state='available'";
+$query="select multiprocessor_name,num_available_procs,multiprocessor_id from multiprocessors";
 $result=db_query($query);
 $num_multiprocs=db_num_rows($result);
 
@@ -79,8 +79,22 @@ for($i=0;$i<$num_multiprocs;$i++)
 }
 
 $file_path="${DATA_PATH}/${user_id}/${task_id}/sequences.fasta";
+$pdb_file_path="${DATA_PATH}/${user_id}/${task_id}/structure.pdb";
+$txt_file_path="${DATA_PATH}/${user_id}/${task_id}/selection.txt";
 
-$data_status=file_exists($file_path);
+
+if ($algorithm == "FitProt")
+{
+	$data_status = file_exists($pdb_file_path);
+	if (!$data_status)
+	{
+		$data_status = file_exists($txt_file_path);
+	}
+}
+else
+{
+	$data_status=file_exists($file_path);
+}
 
 if (($task_status=="submitted") || 
     ($task_status=="stopped") || 
@@ -198,11 +212,11 @@ print_page_header("Edit task","..");
 				);
 
 				$str="<a href=\"../pages/data_for_task.php?task_id=${task_id}\"><br>data<br></a>";
-				print_null_input($str,"Edit data for this task",false);
+				print_null_input($str,"Edit data for this task",False);
 			}
 			else
 			{
-				print_null_input("<br>no<br>","Data upload status",false);
+				print_null_input("no","Data upload status");
 			}
 
 			$result=db_query("select seq_type, blast_outp_detail_lvl, lower_thrshld from blast_tasks where task_id=${task_id}");
@@ -236,14 +250,28 @@ print_page_header("Edit task","..");
 	    ($task_status!="ready"))
 	{
 		print_file_form_header("data","../queries/add_data.php?task_id=${task_id}");
-			print_table_header();
-				print_textarea_input("fasta","","Sequences in Fasta format");
-			print_table_tail();
-	
-			print_table_header();
-				print_file_input("file","File in Fasta format (size &le; ${MAX_FILE_SIZE} MB)");
-			print_table_tail();
-			print_submit_input("sbm_button","Upload sequences");
+			if ($algorithm == "FitProt")
+			{
+				print_table_header();
+					print_file_input("file1","File in PDB format (size &le; ${MAX_FILE_SIZE} MB)");
+			    	print_table_tail();
+	    			//print_submit_input("sbm_button","Upload ");
+				print_table_header();
+					print_file_input("file2","Selection file in txt format (size &le; ${MAX_FILE_SIZE} MB)");
+				print_table_tail();
+				print_submit_input("sbm_button","Upload PDB structure and selection file");
+			}
+			else
+			{
+				print_table_header();
+					print_textarea_input("fasta","","Sequences in Fasta format");
+				print_table_tail();
+				print_table_header();
+					print_file_input("file","File in Fasta format (size &le; ${MAX_FILE_SIZE} MB)");
+				print_table_tail();
+				print_submit_input("sbm_button","Upload sequences");
+			}
+			
 		print_form_tail();
 	}
 

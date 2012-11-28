@@ -32,26 +32,154 @@ class Task:
 
 	def init_blast_task(self,db_row):
 		if len(db_row)>0:
+
 			self.seq_type              = db_row[0]
 			self.blast_outp_detail_lvl = db_row[1]
 			self.seq_simil_thrshld     = db_row[2]
 	
 	def upload_data(self):
-		string="scp %s/%d/%d/sequences.fasta %s@%s:%s/%d.fasta" %\
-		(
-			global_vars.data_path,
-			self.user_id,
-			self.task_id,
-			self.user_on_mult,
-			self.host,
-			self.path,
-			self.task_id
-		)
+		if self.algorithm == "FitProt":			
+			run_fitprot="cd %s/%d/%d; /home/romanenkov/fitprot/search_substs.py -p %s/%d/%d/structure.pdb -s %s/%d/%d/selection.txt -o %s/%d/%d/tmp > /home/romanenkov/aligner/ssh_run/fit_log.txt; scp %s/%d/%d/energy_array %s@%s:%s/%d.en" %\
+			(
+				global_vars.data_path,
+				self.user_id,
+				self.task_id,
+				global_vars.data_path,	
+				self.user_id,
+				self.task_id,
+				global_vars.data_path,	
+				self.user_id,
+				self.task_id,
+				global_vars.data_path,
+				self.user_id,
+				self.task_id,
+				global_vars.data_path,
+				self.user_id,
+				self.task_id,
+				self.user_on_mult,
+				self.host,
+				self.path,
+				self.task_id
 
-		print "    Task.upload_data(): %s" %string
-		status=os.system(string)
-		if status:
-			raise Task_exception("scp failed!")
+			)
+			#test="echo %s" %\
+			#(	
+			#	run_fitprot
+			#)
+			#os.system(test)
+			print run_fitprot
+			os.system(run_fitprot)
+			#string4="scp %s/%d/%d/energy_array %s@%s:%s/energy_array" %\
+			#(
+			#	global_vars.data_path,
+			#	self.user_id,
+			#	self.task_id,
+			#	self.host,
+			#	self.path
+			#)
+			#os.system(string4)
+
+			string1="scp %s/%d/%d/structure.pdb %s@%s:%s/%d.pdb" %\
+			(
+				global_vars.data_path,
+				self.user_id,
+				self.task_id,
+				self.user_on_mult,
+				self.host,
+				self.path,
+				self.task_id
+			)
+		 	string2="scp %s/%d/%d/selection.txt %s@%s:%s/%d.txt" %\
+			(
+				global_vars.data_path,
+				self.user_id,
+				self.task_id,
+				self.user_on_mult,
+				self.host,
+				self.path,
+				self.task_id
+			)
+
+			print "    Task.upload_data(): %s" %string1
+			status1=os.system(string1)
+			print "    Task.upload_data(): %s" %string2
+			status2=os.system(string2)
+
+			if status1 or status2:
+				raise Task_exception("scp failed!")
+
+		else:
+			if self.algorithm == "nhunt":
+				run_nhunt="cd %s/%d/%d; /home/romanenkov/nhunt/nhunt -i %s/%d/%d/sequences.fasta -d /home/romanenkov/nhunt/db.fasta; scp %s/%d/%d/nhunt.out %s@%s:%s/%d.out" %\
+				(
+					global_vars.data_path,
+					self.user_id,
+					self.task_id,
+					global_vars.data_path,
+					self.user_id,
+					self.task_id,
+					global_vars.data_path,
+					self.user_id,
+					self.task_id,
+					self.user_on_mult,
+					self.host,
+					self.path,
+					self.task_id
+				)
+				print run_nhunt
+				status3=os.system(run_nhunt)
+				print status3
+				if status3:
+					raise Task_exception("11scp failed!11")
+				#print "1 done"
+				string1="scp %s/%d/%d/sequences.fasta %s@%s:%s/%d.fasta" %\
+				(
+					global_vars.data_path,
+					self.user_id,
+					self.task_id,
+					self.user_on_mult,
+					self.host,
+					self.path,
+					self.task_id
+				)
+				#print "ready1"
+				print "    Task.upload_data(): %s" %string1
+				status1=os.system(string1)
+				#print status1
+				#print "ready2"
+				if status1:
+					raise Task_exception("scp failed!")
+					
+				#print "2 done"
+				string2="scp %s/../nhunt/db.fasta %s@%s:%s/db%d.fasta" %\
+				(
+					global_vars.data_path,
+					self.user_on_mult,
+					self.host,
+					self.path,
+					self.task_id
+				)
+				print "    Task.upload_data(): %s" %string2
+				status2=os.system(string2)
+				if status2:
+					raise Task_exception("scp failed!")
+				#print "3 done"
+			else:
+				string="scp %s/%d/%d/sequences.fasta %s@%s:%s/%d.fasta" %\
+				(
+					global_vars.data_path,
+					self.user_id,
+					self.task_id,
+					self.user_on_mult,
+					self.host,
+					self.path,
+					self.task_id
+				)
+
+				print "    Task.upload_data(): %s" %string
+				status=os.system(string)
+				if status:
+					raise Task_exception("scp failed!")
 		
 	def run(self):
 		string="ssh %s@%s \"cd %s; ./scheduler_make_align.sh %d %d %d.fasta %d '%s'\"" %\
@@ -70,12 +198,13 @@ class Task:
 		return status / 256
 
 	def check(self):
-		string="ssh %s@%s \"cd %s; ./scheduler_check_align.sh %d\"" %\
+		string="ssh %s@%s \"cd %s; ./scheduler_check_align.sh %d '%s'\"" %\
 		(
 			self.user_on_mult,
 			self.host,
 			self.path,
-			self.task_id
+			self.task_id,
+			self.algorithm
 		)
 		print string
 		status=os.system(string) / 256

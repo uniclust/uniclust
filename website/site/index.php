@@ -7,7 +7,7 @@
  require_once($base_dir."/tables.php");
  require_once($base_dir."/forms.php");
 
- print_page_header("Multiple sequence alignment on multiprocessors",".");
+ print_page_header("Rational protein design on multiprocessors",".");
  
  $htpps_host_with_site_path=$HTTPS_HOST;
  if ($SITE_PATH!="") $htpps_host_with_site_path.="/".$SITE_PATH;
@@ -16,10 +16,10 @@
   
   <font face="arial">
   <P style="text-align:justify">
-	Welcome to the <ins>Multiple Sequence Alignment on Multiprocessors!</ins><br>
-	This site allows the user to align DNA/RNA or amino acid sequences, using one of the available 
+	Welcome to the <ins>Rational protein design on Multiprocessors!</ins><br>
+	This site allows the user to design proteins, using one of the available 
 	multiprocessor systems. It provides an interface to create tasks, attach data in the 
-	<a href="http://en.wikipedia.org/wiki/Fasta_format">FASTA format</a>
+	<a href="http://en.wikipedia.org/wiki/Protein_Data_Bank_(file_format)">PDB format</a> and text file with information about design positions
 	to each task and then submit it for execution. The server script analyzes
 	user's task content, then transfers the data to one of the multiprocessors and submit the task
 	to the remote execution queue. The system transfers the data from finished tasks to the user 
@@ -34,12 +34,9 @@
   <p style="text-align:left"><font size="+1"><b>Algorithms</b></font></p>
   <font face="arial">
   <P style="text-align:justify">
-	The current version of alignment tools on the website uses the modified MUSCLE algorithm. 
-	Sources and documentation for the MUSCLE are available at 
-	<A href="http://www.drive5.com/muscle">http://www.drive5.com/muscle</a>. 
-	The modification was intended to adaptize MUSCLE algorithm for parallel computing
-	by means of PARUS system, which is available at 
-	<A href="http://parus.sourceforge.net">http://parus.sf.net</A>.  	
+	The current version of design tools on the website uses the modified version
+	of FITPROT algorithm described in the first reference. The modification was 
+	intended to adaptize FITPROT algorithm for parallel computing by means of MPI library.
   </P>
   </font>
 
@@ -52,11 +49,8 @@
 			array
 			(
 				"<center style=\"text-align:left\"> <font size=\"+1\" face=\"times new roman\" color=\"darkgreen\">
-					<I>Alexey N. Salnikov</I> The modification of MUSCLE multiple
-					sequence alignment algorithm for multiprocessors 
-					Proceedings of the 3-rd Moscow conference on computational
-					molecular biology, Moscow, Russia, July 27-31 2007, pp. 
-					270-271.
+					<I>Grishin A., Fonfara I., Wende W., Alexeyevsky D., Alexeevski A., Spirin S., Zanegina O., Karyagina A.</I> Bioinformatics analysis of LAGLIDADG homing endonucleases for construction of enzymes with changed DNA recognition specificity. 4-th Moscow Conference on Computational Molecular Biology, 2009, Moscow, MSU, p.123.
+					
 				</font></center>"
             ),
             False
@@ -66,13 +60,7 @@
 			array
 			(
 				"<center  style=\"text-align:left\"> <font size=\"+1\" face=\"times new roman\" color=\"darkgreen\">
-					<I>Alexey N. Salnikov</I> PARUS: \"A Parallel Programming Framework for
-					Heterogeneous Multiprocessor Systems\" Lecture Notes in 
-					Computer Science  (LNCS 4192) Recent Advantages 
-					in Parallel Virtual Machine and Message Passing Interface,
-					Volume 4192,  pp. 408-409, 2006,  ISBN-10: 3-540-39110-X 
-					ISBN-13: 978-3-540-39110-4.
-					<a href=\"http://dx.doi.org/10.1007/11846802_59\">Link</a>
+					<I>Voigt CA., Gordon DB., Mayo SL.</I> Trading accuracy for speed: A quantitative comparison of search algorithms in protein sequence design. J Mol Biol. 2000 Jun 9;299(3):789-803. PubMed PMID: 10835284.
 				 </font></center>"
              ),
              False

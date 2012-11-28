@@ -115,7 +115,7 @@
 			""
 		);
 	}
-	print_view_table_row($row);
+	print_view_table_row($row, False);
  }
  print_view_table_tail();
  print_action_table_header();

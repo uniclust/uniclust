@@ -25,8 +25,7 @@
  (
 	"multiprocessor_id",
 	"que_multiprocessor_name",
-    "home_page",
-    "state"
+	"home_page"
   );
  $query="select priority_tokens from users where users.user_id = $authorized_user_id";
  $result=db_query($query);
@@ -43,7 +42,7 @@
  print_error("Errors","..");
 
  db_free_result($result);
- $query="select multiprocessor_id, multiprocessor_name as que_multiprocessor_name, site_url as home_page, state from multiprocessors";
+ $query="select multiprocessor_id, multiprocessor_name as que_multiprocessor_name, site_url as home_page from multiprocessors";
  $result2=db_query($query);
  $num_mult=db_num_rows($result2);
  db_form_arrays($multiprocessors_list,$result2);
@@ -164,8 +163,7 @@
  $header_arr=array
  (
 	"name",
-    "home page",
-    "state"
+	"home page"
  );
  print_view_table_header($header_arr,"<br>Queue on multiprocessor:");
  for($i=0;$i<$num_mult;$i++)
@@ -173,8 +171,7 @@
  	$row=array
 	(
 		"<a href=\"../pages/mult_queue.php?mult_id=${multiprocessor_id[$i]}\">$que_multiprocessor_name[$i]</a>",
-        "<a href=\"$home_page[$i]\">--></a>",
-        $state[$i]
+		"<a href=\"$home_page[$i]\">--></a>"
 	);
     print_view_table_row($row,False /* Not apply HTML filter */);
  }
