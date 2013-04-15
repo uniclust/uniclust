@@ -1,0 +1,36 @@
+<?
+ /* Please rename it to
+    global_variables.php and set actual values of variables    
+  */
+
+ $DB_NAME="database_name";
+ $BD_HOST="localhost";
+ $DB_USER="database_user";
+ $DB_USER_PASSWORD="passwd";
+ $DB_GUEST_USER="guest";
+ $DB_GUEST_PASSWORD="";
+
+ /* Note, these paths define the same directories! */
+ $DATA_PATH="/archive/data/aligner";
+ $DOWNLOAD_DATA_PATH="/aligner-data";
+
+ /* An example to explain this variable:
+    if the root directory is "www.host.ext", then the path to index.php is "www.host.ext/aligner/" */
+ $SITE_PATH="aligner/";
+
+ $HTTP_HOST  = "host.cs.msu.su";
+ /* In order to avoid some annoying messages from web browsers, 
+    when you are working on your PC, type something like 127.0.0.1 */
+ $HTTPS_HOST = "host.cs.msu.su";
+
+ /* In fact, this is YOUR group. Also it should be brought into accord with Apache2 "envvars.txt" file */
+ $LOCAL_GROUP = "aligner";
+
+ /* This variable can't over size of php limits.  */
+
+ $MAX_FILE_SIZE = "50"; /* MB */
+
+ /* Attention! Do not add newline before end of this file. 
+    Last symbol in file must be '>'
+  */  
+?>
