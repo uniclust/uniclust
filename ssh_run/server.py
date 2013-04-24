@@ -135,7 +135,8 @@ while 1:
 			users.email,
 			tasks.priority_run,
 			tasks.priority_max,
-			tasks.running_time
+			tasks.running_time,
+			tasks.queue_num
 		from
 			tasks,
 			multiprocessors,
@@ -254,6 +255,254 @@ while 1:
 			query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
 			curs.execute(query)
 			tsk.email_notify_on_finish("refused")
+
+
+	#mpfpfs tasks
+
+	query=\
+	"""
+		select 
+			multiprocessors.num_available_procs,
+			multiprocessors.multiprocessor_id
+		from
+			multiprocessors
+		where
+			multiprocessors.queue_alg = "mpfpfs"
+	"""
+	curs.execute(query)
+	resultM=curs.fetchall()
+	num_multiprocessors=len(resultM)
+	print "%d multiprocessor(s) use(s) algorithm 'mpfpfs':" %num_multiprocessors
+	rt = datetime.datetime.today()
+
+	for i in range(0,num_multiprocessors):
+		num_mult_proc=resultM[i][0]
+		mult_id=resultM[i][1]
+		
+		proc_num = num_mult_proc
+		
+		SubmittedTask = []
+		SubTaskId = []
+		TaskList = [] 
+		RunTaskList = []
+		SbmTaskList = []
+		StopTaskList = []
+		ReadyTaskLst = []
+		NqTaskList = []
+		tsklist = {}
+		#select queued & not queued 
+		query=\
+		"""
+			select 
+				tasks.user_id,
+				tasks.task_id,
+				tasks.algorithm,
+				tasks.num_procs,
+				tasks.duration_in_minutes,
+				tasks.task_status,
+				multiprocessors.host,
+				multiprocessors.path,
+				multiprocessors.user_on_it,
+				users.email,
+				tasks.priority_run,
+				tasks.priority_max,
+				tasks.running_time,
+				tasks.queue_num
+				
+			from
+				tasks,
+				multiprocessors,
+				users
+			where
+				(tasks.queue_num=NULL) and (tasks.task_status="ready") and
+				(tasks.multiprocessor_id=multiprocessors.multiprocessor_id) and
+				(multiprocessors.multiprocessor_id = %d) and 
+				(tasks.user_id=users.user_id)
+		"""%mult_id
+		curs.execute(query)
+		result_q1=curs.fetchall()
+		num_tasks_q1=len(result_q1)
+		
+		query=\
+		"""
+			select 
+				tasks.user_id,
+				tasks.task_id,
+				tasks.algorithm,
+				tasks.num_procs,
+				tasks.duration_in_minutes,
+				tasks.task_status,
+				multiprocessors.host,
+				multiprocessors.path,
+				multiprocessors.user_on_it,
+				users.email,
+				tasks.priority_run,
+				tasks.priority_max,
+				tasks.running_time,
+				tasks.queue_num
+				
+			from
+				tasks,
+				multiprocessors,
+				users
+			where
+				(tasks.queue_num<>NULL) and 
+				((tasks.task_status="ready") or (tasks.task_status="stopped") or (tasks.task_status="submitted")) and
+				(tasks.multiprocessor_id=multiprocessors.multiprocessor_id) and
+				(multiprocessors.multiprocessor_id = %d) and 
+				(tasks.user_id=users.user_id)
+		"""%mult_id
+		curs.execute(query)
+		result_q2=curs.fetchall()
+		num_tasks_q2=len(result_q2)
+		
+		print "\tnumber of not queued tasks on multiproc with ID %d is %d" %(mult_id, num_tasks_q1)
+		print "\tnumber of queued tasks on multiproc with ID %d is %d" %(mult_id, num_tasks_q2)
+		
+		if (num_tasks_q1 == 0) and (num_tasks_q2 == 0):
+			continue
+		
+		#fill task status lists
+		for i in range(0,num_tasks_q1):
+			tsk=task.Task(result_q1[i])
+			#NqTaskList.append([tsk.task_id, tsk.duration_in_minutes*60, tsk.num_procs])
+			NqTaskList.append(tsk)
+		
+		for i in range(0,num_tasks_q2):
+			tsk=task.Task(result_q2[i])
+			if (tsk.task_status == "submitted"):			
+				#SbmTaskList.append([tsk.task_id, tsk.duration_in_minutes*60, tsk.num_procs, tsk.queue_num])
+				SbmTaskList.append(tsk)
+				proc_num = max(0, proc_num - tsk.num_procs)
+			#do we need it?
+			elif (tsk.task_status == "running"):
+				#RunTaskList.append([tsk.task_id, tsk.duration_in_minutes*60, tsk.num_procs, tsk.queue_num])
+				RunTaskList.append(tsk)
+				proc_num = max(0, proc_num - tsk.num_procs)
+			elif (tsk.task_status == "stopped"):
+				#StopTaskList.append([tsk.task_id, tsk.duration_in_minutes*60, tsk.num_procs, tsk.queue_num])
+				StopTaskList.append(tsk)
+				proc_num = max(0, proc_num - tsk.num_procs)
+			#do we need it?	
+			elif (tsk.task_status == "ready"):	
+				#ReadyTaskList.append([tsk.task_id, tsk.duration_in_minutes*60, tsk.num_procs, tsk.queue_num])
+				ReadyTaskList.append(tsk)
+		#
+		# stopping tasks
+		#
+		for i in range (0, len(StopTaskList)): 	
+			try:
+				StopTaskList[i].download_data()
+			except:
+				print "    Download data failed!"
+			StopTaskList[i].remote_task_delete()
+			query="update tasks set task_status='refused' where task_id=%d" %StopTaskList[i].task_id
+			curs.execute(query)
+			StopTaskList[i].email_notify_on_finish("refused")
+			proc_num = min(num_mult_proc, proc_num + StopTaskList[i].num_procs)
+			
+		
+		#do we need it?
+		#
+		#check tasks
+		#
+		for i in range (0, len(RunTaskList)): 
+			
+			status=RunTaskList[i].check()
+			print "    Task check: %d" %status
+			
+			if status==0:
+				RunTaskList[i].clear_remote_data()
+				RunTaskList[i].download_data()
+				RunTaskList[i].remote_task_delete()
+				query="update tasks set task_status='finished',date_of_finishing=CURRENT_DATE where task_id=%d" %RunTaskList[i].task_id
+				curs.execute(query)
+				RunTaskList[i].email_notify_on_finish("success")
+				proc_num = min(num_mult_proc, proc_num + RunTaskList[i].num_procs)
+				del RunTaskList[i]
+				continue
+				
+			if status==2:
+				continue
+				
+		#
+		#check tasks
+		#
+		for i in range (0, len(SbmTaskList)):
+			
+			status=SbmTaskList[i].check()
+			print "    Task check: %d" %status
+			
+			if status==0:
+				SbmTaskList[i].clear_remote_data()
+				SbmTaskList[i].download_data()
+				SbmTaskList[i].remote_task_delete()
+				query="update tasks set task_status='finished',date_of_finishing=CURRENT_DATE where task_id=%d" %SbmTaskList[i].task_id
+				curs.execute(query)
+				SbmTaskList[i].email_notify_on_finish("success")
+				proc_num = min(num_mult_proc, proc_num + SbmTaskList[i].num_procs)
+				del SbmTaskList[i]
+				continue
+				
+			if status==2:
+				continue
+				
+			#
+			# Unknown task status or error during task code execution
+			#
+			SbmTaskList[i].clear_remote_data()
+			try:
+				SbmTaskList[i].download_data()
+				SbmTaskList[i].remote_task_delete()
+			except:
+				print "    TASK ERROR!!"
+			
+			query="update tasks set task_status='refused' where task_id=%d" %SbmTaskList[i].task_id
+			curs.execute(query)
+			SbmTaskList[i].email_notify_on_finish("refused")
+			
+		#sort by queue_num
+		#l1 = len(SbmTaskList)
+		SbmTaskList.sort(lambda Task1,Task2: cmp(Task1.queue_num,Task2.queue_num))
+		#updating queue_num
+		for i in range (0, len(SbmTaskList)):
+			SbmTaskList[i].queue_num = i
+		
+		#sort by procs num
+		NqTaskList.sort(lambda Task1,Task2: cmp(Task2.num_procs,Task1.num_procs))
+		#queue and run tasks
+		place = len(SbmTaskList)
+		for i in range (0, len(NqTaskList)):
+			if (NqTaskList[i].num_procs < proc_num):
+				proc_num = proc_num - NqTaskList[i][2]
+				NqTaskList[i].queue_num = place
+				place = place + 1
+				#
+				# running tasks 
+				#			
+				try:
+					NqTaskList[i].upload_data()
+				except:
+					print "    Upload data for task %d failed!" %NqTaskList[i].task_id
+					query="update tasks set task_status='stopped', priority_max=1005 where task_id=%d" %NqTaskList[i].task_id
+					curs.execute(query)
+					continue
+				status=NqTaskList[i].run()
+				if status:
+					print "    Run task %d failed!" %NqTaskList[i].task_id
+					query="update tasks set task_status='stopped', priority_max=1010 where task_id=%d" %NqTaskList[i].task_id
+					curs.execute(query)
+					continue
+				query="update tasks set task_status='submitted', running_time=NOW(), queue_num=%d where task_id=%d" %\
+				(
+					NqTaskList[i].queue_num,
+					NqTaskList[i].task_id
+				)
+				curs.execute(query)
+				if proc_num == 0:
+					break			
+
+
 
 
 	#backfill tasks

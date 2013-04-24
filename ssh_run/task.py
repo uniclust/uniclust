@@ -26,6 +26,7 @@ class Task:
 		self.priority_run         = db_row[10]
 		self.priority_max         = db_row[11]
 		self.running_time         = db_row[12]
+		self.queue_num		  = db_row[13]
 		self.seq_type             = ""
 		self.blast_outp_detail_lvl= 0
 		self.seq_simil_thrshld    = 0

@@ -70,6 +70,7 @@ CREATE TABLE `tasks` (
   `priority_max` int(11) DEFAULT '1',
   `running_time` datetime DEFAULT NULL,
   `task_status` enum('new','ready','submitted','finished','refused','stopped','running') DEFAULT NULL,
+  `queue_num` int(10) DEFAULT NULL,
   PRIMARY KEY (`task_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=82 DEFAULT CHARSET=utf8;
 
