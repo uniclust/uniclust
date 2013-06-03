@@ -7,7 +7,7 @@
  require_once($base_dir."/tables.php");
  require_once($base_dir."/forms.php");
 
- print_page_header("Rational protein design on multiprocessors",".");
+ print_page_header("Processing biosequences on multiprocessors",".");
  
  $htpps_host_with_site_path=$HTTPS_HOST;
  if ($SITE_PATH!="") $htpps_host_with_site_path.="/".$SITE_PATH;
@@ -16,10 +16,10 @@
   
   <font face="arial">
   <P style="text-align:justify">
-	Welcome to the <ins>Rational protein design on Multiprocessors!</ins><br>
-	This site allows the user to design proteins, using one of the available 
-	multiprocessor systems. It provides an interface to create tasks, attach data in the 
-	<a href="http://en.wikipedia.org/wiki/Protein_Data_Bank_(file_format)">PDB format</a> and text file with information about design positions
+	Welcome to the <ins>Web-application for processing biosequences on multiprocessors!</ins><br>
+	This site allows the user to design proteins, make mulitiple sequence alignment and
+	compare a query sequence with a database of sequences using one of the available multiprocessor systems.
+	It provides an interface to create tasks, attach data in the PDB or FASTA formats
 	to each task and then submit it for execution. The server script analyzes
 	user's task content, then transfers the data to one of the multiprocessors and submit the task
 	to the remote execution queue. The system transfers the data from finished tasks to the user 
@@ -36,7 +36,9 @@
   <P style="text-align:justify">
 	The current version of design tools on the website uses the modified version
 	of FITPROT algorithm described in the first reference. The modification was 
-	intended to adaptize FITPROT algorithm for parallel computing by means of MPI library.
+	intended to adaptize FITPROT algorithm for parallel computing by means of MPI library.<br></br>
+	For making multiple sequence alignment parallel MUSCLE and ClustalW algorithms are available.<br></br>
+	For comparing a query sequence with database MPI version of nhunt is available.
   </P>
   </font>
 
@@ -60,7 +62,19 @@
 			array
 			(
 				"<center  style=\"text-align:left\"> <font size=\"+1\" face=\"times new roman\" color=\"darkgreen\">
-					<I>Voigt CA., Gordon DB., Mayo SL.</I> Trading accuracy for speed: A quantitative comparison of search algorithms in protein sequence design. J Mol Biol. 2000 Jun 9;299(3):789-803. PubMed PMID: 10835284.
+					<I>Ю. Пеков and С. Спирин, “Nhunt: new program for dna sequence similarity searching,” in Proceedings of Moscow Conference on Computational Molecular Biology (MCCMB'11), Москва, 2011.
+					
+				 </font></center>"
+             ),
+             False
+		);
+		print_view_table_row
+		(
+			array
+			(
+				"<center  style=\"text-align:left\"> <font size=\"+1\" face=\"times new roman\" color=\"darkgreen\">
+					<I>Alexey N. Salnikov The modification of MUSCLE multiple sequence alignment algorithm for multiprocessors Proceedings of the 3-rd Moscow conference on computational molecular biology, Moscow, Russia, July 27-31 2007, pp. 270-271. 
+					
 				 </font></center>"
              ),
              False

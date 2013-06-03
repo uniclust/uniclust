@@ -113,7 +113,16 @@ if (!file_exists($dir_name))
 
 print_error("Errors","..");
 
-
+if ($algorithm == "nhunt")
+{
+	$db_set_field=array
+	(
+		"db_number"
+	);
+	read_vars($db_set_field, "post");
+	$db_number=(int)$db_number;
+	db_query("update tasks set db_set=$db_number  where task_id=$task_id");
+}
 
 
 if ($algorithm == "FitProt")

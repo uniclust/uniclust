@@ -136,7 +136,8 @@ while 1:
 			tasks.priority_run,
 			tasks.priority_max,
 			tasks.running_time,
-			tasks.queue_num
+			tasks.queue_num,
+			tasks.db_set
 		from
 			tasks,
 			multiprocessors,
@@ -272,7 +273,7 @@ while 1:
 	curs.execute(query)
 	resultM=curs.fetchall()
 	num_multiprocessors=len(resultM)
-	print "%d multiprocessor(s) use(s) algorithm 'mpfpfs':" %num_multiprocessors
+	#print "%d multiprocessor(s) use(s) algorithm 'mpfpfs':" %num_multiprocessors
 	rt = datetime.datetime.today()
 
 	for i in range(0,num_multiprocessors):
@@ -289,6 +290,8 @@ while 1:
 		StopTaskList = []
 		ReadyTaskLst = []
 		NqTaskList = []
+		NewRunTaskList = []
+		NewSbmTaskList = []
 		tsklist = {}
 		#select queued & not queued 
 		query=\
@@ -307,14 +310,15 @@ while 1:
 				tasks.priority_run,
 				tasks.priority_max,
 				tasks.running_time,
-				tasks.queue_num
+				tasks.queue_num,
+				tasks.db_set
 				
 			from
 				tasks,
 				multiprocessors,
 				users
 			where
-				(tasks.queue_num=NULL) and (tasks.task_status="ready") and
+				(tasks.queue_num is NULL) and (tasks.task_status="ready") and
 				(tasks.multiprocessor_id=multiprocessors.multiprocessor_id) and
 				(multiprocessors.multiprocessor_id = %d) and 
 				(tasks.user_id=users.user_id)
@@ -339,14 +343,15 @@ while 1:
 				tasks.priority_run,
 				tasks.priority_max,
 				tasks.running_time,
-				tasks.queue_num
+				tasks.queue_num,
+				tasks.db_set
 				
 			from
 				tasks,
 				multiprocessors,
 				users
 			where
-				(tasks.queue_num<>NULL) and 
+				!(tasks.queue_num is NULL) and 
 				((tasks.task_status="ready") or (tasks.task_status="stopped") or (tasks.task_status="submitted")) and
 				(tasks.multiprocessor_id=multiprocessors.multiprocessor_id) and
 				(multiprocessors.multiprocessor_id = %d) and 
@@ -356,8 +361,54 @@ while 1:
 		result_q2=curs.fetchall()
 		num_tasks_q2=len(result_q2)
 		
-		print "\tnumber of not queued tasks on multiproc with ID %d is %d" %(mult_id, num_tasks_q1)
-		print "\tnumber of queued tasks on multiproc with ID %d is %d" %(mult_id, num_tasks_q2)
+		#print "\tnumber of not queued tasks on multiproc with ID %d is %d" %(mult_id, num_tasks_q1)
+		#print "\tnumber of queued tasks on multiproc with ID %d is %d" %(mult_id, num_tasks_q2)
+		
+		
+		#select broken tasks
+		query=\
+		"""
+			select 
+				tasks.user_id,
+				tasks.task_id,
+				tasks.algorithm,
+				tasks.num_procs,
+				tasks.duration_in_minutes,
+				tasks.task_status,
+				multiprocessors.host,
+				multiprocessors.path,
+				multiprocessors.user_on_it,
+				users.email,
+				tasks.priority_run,
+				tasks.priority_max,
+				tasks.running_time,
+				tasks.queue_num,
+				tasks.db_set
+				
+			from
+				tasks,
+				multiprocessors,
+				users
+			where
+				(tasks.queue_num is NULL) and (tasks.task_status="stopped") and
+				(tasks.multiprocessor_id=multiprocessors.multiprocessor_id) and
+				(multiprocessors.multiprocessor_id = %d) and 
+				(tasks.user_id=users.user_id)
+		"""%mult_id
+		curs.execute(query)
+		result_q3=curs.fetchall()
+		
+		#delete broken tasks
+		for i in range(0, len(result_q3)):
+			tsk=task.Task(result_q3[i])
+			try:
+				tsk.download_data()
+			except:
+				print "    Download data failed!"
+			tsk.remote_task_delete()
+			query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
+			curs.execute(query)
+			tsk.email_notify_on_finish("refused")
 		
 		if (num_tasks_q1 == 0) and (num_tasks_q2 == 0):
 			continue
@@ -416,13 +467,15 @@ while 1:
 				RunTaskList[i].download_data()
 				RunTaskList[i].remote_task_delete()
 				query="update tasks set task_status='finished',date_of_finishing=CURRENT_DATE where task_id=%d" %RunTaskList[i].task_id
+				#RunTaskList[i].task_status = 'finished'
 				curs.execute(query)
 				RunTaskList[i].email_notify_on_finish("success")
 				proc_num = min(num_mult_proc, proc_num + RunTaskList[i].num_procs)
-				del RunTaskList[i]
+				#del RunTaskList[i]
 				continue
 				
 			if status==2:
+				NewRunTaskList.append(RunList[i])
 				continue
 				
 		#
@@ -441,10 +494,11 @@ while 1:
 				curs.execute(query)
 				SbmTaskList[i].email_notify_on_finish("success")
 				proc_num = min(num_mult_proc, proc_num + SbmTaskList[i].num_procs)
-				del SbmTaskList[i]
+				#del SbmTaskList[i]
 				continue
 				
 			if status==2:
+				NewSbmTaskList.append(SbmTaskList[i])
 				continue
 				
 			#
@@ -460,21 +514,28 @@ while 1:
 			query="update tasks set task_status='refused' where task_id=%d" %SbmTaskList[i].task_id
 			curs.execute(query)
 			SbmTaskList[i].email_notify_on_finish("refused")
+			proc_num = min(num_mult_proc, proc_num + SbmTaskList[i].num_procs)
 			
 		#sort by queue_num
 		#l1 = len(SbmTaskList)
-		SbmTaskList.sort(lambda Task1,Task2: cmp(Task1.queue_num,Task2.queue_num))
+		NewSbmTaskList.sort(lambda Task1,Task2: cmp(Task1.queue_num,Task2.queue_num))
 		#updating queue_num
-		for i in range (0, len(SbmTaskList)):
-			SbmTaskList[i].queue_num = i
+		for i in range (0, len(NewSbmTaskList)):
+			NewSbmTaskList[i].queue_num = i
+			query = "update tasks set queue_num=%d where task_id=%d" %\
+			(
+				i,
+				NewSbmTaskList[i].task_id
+			)
 		
 		#sort by procs num
+		#print len(NqTaskList)
 		NqTaskList.sort(lambda Task1,Task2: cmp(Task2.num_procs,Task1.num_procs))
 		#queue and run tasks
-		place = len(SbmTaskList)
+		place = len(NewSbmTaskList)
 		for i in range (0, len(NqTaskList)):
-			if (NqTaskList[i].num_procs < proc_num):
-				proc_num = proc_num - NqTaskList[i][2]
+			if (NqTaskList[i].num_procs <= proc_num):
+				proc_num = proc_num - NqTaskList[i].num_procs
 				NqTaskList[i].queue_num = place
 				place = place + 1
 				#

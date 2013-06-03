@@ -61,6 +61,19 @@ $mult_list=array
 	"multiprocessor_id"
 );
 
+
+$db_lables=array
+(
+	"Proteobacteria-Gamma",
+	"GC-low bacteria and archaea"
+);
+
+$db_values=array
+(
+	1,
+	2
+);
+
 db_form_arrays($mult_list,$result);
 db_free_result($result);
 
@@ -263,13 +276,36 @@ print_page_header("Edit task","..");
 			}
 			else
 			{
-				print_table_header();
-					print_textarea_input("fasta","","Sequences in Fasta format");
-				print_table_tail();
-				print_table_header();
-					print_file_input("file","File in Fasta format (size &le; ${MAX_FILE_SIZE} MB)");
-				print_table_tail();
-				print_submit_input("sbm_button","Upload sequences");
+				if ($algorithm == "nhunt")
+				{
+					print_table_header();
+						print_textarea_input("fasta","","Sequences in Fasta format");
+					print_table_tail();
+					print_table_header();
+						print_file_input("file","File in Fasta format (size &le; ${MAX_FILE_SIZE} MB)");
+					print_table_tail();
+					print_table_header();
+						print_select_input
+						(
+							"db_number",
+							$db_lables,
+							$db_values,
+							"",
+							"Select database set for comparing with query"
+						);
+					print_table_tail();
+					print_submit_input("sbm_button","Upload sequences and select database");
+				}
+				else
+				{
+					print_table_header();
+						print_textarea_input("fasta","","Sequences in Fasta format");
+					print_table_tail();
+					print_table_header();
+						print_file_input("file","File in Fasta format (size &le; ${MAX_FILE_SIZE} MB)");
+					print_table_tail();
+					print_submit_input("sbm_button","Upload sequences");
+				}
 			}
 			
 		print_form_tail();
