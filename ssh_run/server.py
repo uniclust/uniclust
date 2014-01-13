@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
+
 import MySQLdb
 import global_vars
 import task
@@ -9,15 +11,29 @@ import os
 import datetime
 import Backfill
 import time
+import fcntl
+
 
 flag=True
-
 #os.unlink(global_vars.lock_path)
 
-#try: 
-#	f=open(global_vars.lock_path,"r")
-#except:
-#	flag=False
+try: 
+	f=os.open(global_vars.lock_path,os.O_CREAT|os.O_WRONLY|os.O_SYNC, 0600)
+	#f = open(global_vars.lock_path, "w")
+	#pid = str(os.getpid())
+	#f.write("%s\n" %pid)
+	fcntl.flock(f,fcntl.LOCK_EX | fcntl.LOCK_NB)
+except Exception as s:
+	print s
+	flag=False
+
+if flag==False:
+	print "Сhecking server lock... Fail! Try to delete the locking file manually"
+	print "-------------------------"
+	#os.close(f)
+	#f.close()
+	sys.exit(1)
+print "Сhecking server lock... OK!"
 
 
 #sys.stdout.write("Success!")
@@ -53,6 +69,15 @@ se = file('home/romanenkov/aligner/ssh_run/stderr.log', 'a+', 0)
 os.dup2(so.fileno(), sys.stdout.fileno())
 os.dup2(se.fileno(), sys.stderr.fileno())
 sys.stdout.write("Success")
+
+#f.seek(0, 0)
+os.lseek(f, 0, os.SEEK_SET)
+#f.rewind()
+pid = str(os.getpid())
+#f.write("%s\n" %pid)
+os.write(f, "%s\n" %pid)
+#f.flush()
+
 
 #
 # get current date and time (without microseconds)
@@ -98,9 +123,11 @@ while 1:
 		sys.exit(1)
 
 
-	f=open(global_vars.lock_path,"w")
-	f.write("Do not delete it!")
-	f.close()
+	#f=open(global_vars.lock_path,"w")
+	#f.write("Do not delete it!")
+	#pid = str(os.getpid())
+	#f.write("%s\n" %pid)
+	#f.close()
 
 
 	curs=db.cursor()
@@ -158,13 +185,15 @@ while 1:
 
 	for i in range(0,num_tasks):
 
-		print "  task %d:" %i
+		
 		
 		#
 		# create Task object
 		#
 		tsk=task.Task(result[i])
-		
+
+		print "  task %d %d:" %(i, tsk.task_id)
+
 		query=\
 		"""
 			select
