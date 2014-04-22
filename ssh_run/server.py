@@ -17,6 +17,34 @@ import fcntl
 flag=True
 #os.unlink(global_vars.lock_path)
 
+# read config
+conffilename = "/etc/uniclust/uniclust.conf"
+f=open(conffilename,"r")
+config={}
+for l in f.read().split('\n'):
+	l=l.split('#')[0]
+	if '=' in l:
+	    kp=list(l.split('=',1))
+	    config[kp[0].lower()]=kp[1]
+f.close()
+
+if 'pidfile' not in config:
+	config[pidfile] = '/var/run/uniclust.pid'
+
+if 'user' not in config:
+	config[user] = 'root'
+
+if 'logfile' not in config:
+	config[logfile] = '/var/log/uniclust.log'
+
+if 'errfile' not in config:
+	config[errfile] = '/var/log/uniclust.err'
+
+# privileges
+from pwd import getpwnam
+os.setuid(getpwnam(config[user]).pw_uid)
+os.setgid(getpwnam(config[user]).pw_gid)
+
 try: 
 	f=os.open(global_vars.lock_path,os.O_CREAT|os.O_WRONLY|os.O_SYNC, 0600)
 	#f = open(global_vars.lock_path, "w")
@@ -38,33 +66,37 @@ print "Сhecking server lock... OK!"
 
 #sys.stdout.write("Success!")
 try:
-    pid = os.fork()
-    if pid > 0:
-    	# exit first parent
-    	sys.exit(0)
+	pid = os.fork()
+	if pid > 0:
+		# exit first parent
+		sys.exit(0)
 except OSError, e:
-    sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
-    sys.exit(1)
+	sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
+	sys.exit(1)
+# write pid file
+pidfile = file(config[pidfile], 'w')
+pidfile.write(pid)
+pidfile.fclose()
 # decouple from parent environment
 os.chdir("/")
 os.umask(0)
 os.setsid()
 # do second fork
 try:
-    pid = os.fork()
-    if pid > 0:
-    	# exit from second parent
-    	sys.exit(0)
+	pid = os.fork()
+	if pid > 0:
+		# exit from second parent
+		sys.exit(0)
 except OSError, e:
-    sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
-    sys.exit(1)
+	sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
+	sys.exit(1)
 sys.stdout.write("Success!")
 # redirect standard file descriptors
 sys.stdout.flush()
 sys.stderr.flush()
 #si = file('dev/null', 'r')
-so = file('home/romanenkov/aligner/ssh_run/stdout.log', 'a+')
-se = file('home/romanenkov/aligner/ssh_run/stderr.log', 'a+', 0)
+so = file(config[logfile], 'a+')
+se = file(config[errfile], 'a+', 0)
 #os.dup2(si.fileno(), sys.stdin.fileno())
 os.dup2(so.fileno(), sys.stdout.fileno())
 os.dup2(se.fileno(), sys.stderr.fileno())
