@@ -1,0 +1,41 @@
+    '''program : newline pprogram'''
+    '''program : pprogram'''
+    '''pprogram : pprogram statement SEMICOLON newline
+                | statement SEMICOLON newline'''
+    '''statement : RUN'''
+    '''statement : END'''
+    '''program : error'''
+    '''statement : command'''
+    '''statement : error SEMICOLON'''
+    '''statement : NEWLINE'''
+    '''statement : SEMICOLON'''
+    '''command : SHELL expr'''
+    '''command : CONNECT expr expr expr expr'''
+    '''command : QUERY expr'''
+    '''command : PRINT plist'''
+    '''command : PRINT error'''
+    '''command : PRINT'''
+    '''command : REM'''
+    '''number  : INTEGER
+               | FLOAT'''
+    '''number  : MINUS INTEGER
+               | MINUS FLOAT'''
+    '''command : variable EQUALS expr'''
+    '''command : variable EQUALS error'''
+    '''expr : expr PLUS expr
+            | expr POWER expr'''
+    '''expr : INTEGER
+            | FLOAT'''
+    '''expr : variable'''
+    '''expr : LPAREN expr RPAREN'''
+    '''expr : MINUS expr %prec UMINUS'''
+    '''expr : STRING'''
+    '''variable : ID'''
+    '''plist   : plist COMMA pitem
+               | pitem'''
+    '''pitem : STRING'''
+    '''pitem : STRING expr'''
+    '''pitem : expr'''
+    '''newline : newline NEWLINE
+               | NEWLINE'''
+    '''empty : '''

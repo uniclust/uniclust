@@ -1,0 +1,16 @@
+# Тестовый файлик с моей программой
+X = 3
+run find 400
+print U, V, W
+X = 5
+UString "tribute"
+UTable ("test1", "test2", "test3", "test4")
+Z = 400
+Z = U + 2*V + 3*W
+print Z
+U = X*X
+V = X*X*X
+W = X*X*X*X + X*X*X + X*X + X
+
+
+

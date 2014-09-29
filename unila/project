@@ -1,0 +1,6 @@
+create_param int my_own_fucking_param;
+set_param task_id 35;
+set_param algorithm "fucking_algorithm";
+
+push_that_parameters_to_db;
+save_that_parameters_to_gui_xml;

@@ -1,0 +1,1578 @@
+Created by PLY version 3.4 (http://www.dabeaz.com/ply)
+
+Unused terminals:
+
+    THEN
+    RETURN
+    READ
+    UTHREAD
+    DATA
+    FIND
+    DEF
+    NE
+    UTABLE
+    TO
+    LT
+    TABLE
+    LATTICESIGN
+    GT
+    GOTO
+    FOR
+    GE
+    LE
+    UFRAME
+    IF
+
+Grammar
+
+Rule 0     S' -> program
+Rule 1     program -> newline pprogram
+Rule 2     program -> pprogram
+Rule 3     pprogram -> pprogram statement SEMICOLON newline
+Rule 4     pprogram -> statement SEMICOLON newline
+Rule 5     statement -> RUN
+Rule 6     statement -> END
+Rule 7     program -> error
+Rule 8     statement -> command
+Rule 9     statement -> error SEMICOLON
+Rule 10    statement -> NEWLINE
+Rule 11    statement -> SEMICOLON
+Rule 12    command -> SHELL expr
+Rule 13    command -> CONNECT expr expr expr expr
+Rule 14    command -> QUERY expr
+Rule 15    command -> PRINT plist
+Rule 16    command -> PRINT error
+Rule 17    command -> PRINT
+Rule 18    command -> REM
+Rule 19    number -> INTEGER
+Rule 20    number -> FLOAT
+Rule 21    number -> MINUS INTEGER
+Rule 22    number -> MINUS FLOAT
+Rule 23    command -> variable EQUALS expr
+Rule 24    command -> variable EQUALS error
+Rule 25    expr -> expr PLUS expr
+Rule 26    expr -> expr MINUS expr
+Rule 27    expr -> expr TIMES expr
+Rule 28    expr -> expr DIVIDE expr
+Rule 29    expr -> expr POWER expr
+Rule 30    expr -> INTEGER
+Rule 31    expr -> FLOAT
+Rule 32    expr -> variable
+Rule 33    expr -> LPAREN expr RPAREN
+Rule 34    expr -> MINUS expr
+Rule 35    expr -> STRING
+Rule 36    variable -> ID
+Rule 37    plist -> plist COMMA pitem
+Rule 38    plist -> pitem
+Rule 39    pitem -> STRING
+Rule 40    pitem -> STRING expr
+Rule 41    pitem -> expr
+Rule 42    newline -> newline NEWLINE
+Rule 43    newline -> NEWLINE
+Rule 44    empty -> <empty>
+
+Terminals, with rules where they appear
+
+COMMA                : 37
+CONNECT              : 13
+DATA                 : 
+DEF                  : 
+DIVIDE               : 28
+END                  : 6
+EQUALS               : 23 24
+FIND                 : 
+FLOAT                : 20 22 31
+FOR                  : 
+GE                   : 
+GOTO                 : 
+GT                   : 
+ID                   : 36
+IF                   : 
+INTEGER              : 19 21 30
+LATTICESIGN          : 
+LE                   : 
+LPAREN               : 33
+LT                   : 
+MINUS                : 21 22 26 34
+NE                   : 
+NEWLINE              : 10 42 43
+PLUS                 : 25
+POWER                : 29
+PRINT                : 15 16 17
+QUERY                : 14
+READ                 : 
+REM                  : 18
+RETURN               : 
+RPAREN               : 33
+RUN                  : 5
+SEMICOLON            : 3 4 9 11
+SHELL                : 12
+STRING               : 35 39 40
+TABLE                : 
+THEN                 : 
+TIMES                : 27
+TO                   : 
+UFRAME               : 
+UTABLE               : 
+UTHREAD              : 
+error                : 7 9 16 24
+
+Nonterminals, with rules where they appear
+
+command              : 8
+empty                : 
+expr                 : 12 13 13 13 13 14 23 25 25 26 26 27 27 28 28 29 29 33 34 40 41
+newline              : 1 3 4 42
+number               : 
+pitem                : 37 38
+plist                : 15 37
+pprogram             : 1 2 3
+program              : 0
+statement            : 3 4
+variable             : 23 24 32
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . program
+    (1) program -> . newline pprogram
+    (2) program -> . pprogram
+    (7) program -> . error
+    (42) newline -> . newline NEWLINE
+    (43) newline -> . NEWLINE
+    (3) pprogram -> . pprogram statement SEMICOLON newline
+    (4) pprogram -> . statement SEMICOLON newline
+    (5) statement -> . RUN
+    (6) statement -> . END
+    (8) statement -> . command
+    (9) statement -> . error SEMICOLON
+    (10) statement -> . NEWLINE
+    (11) statement -> . SEMICOLON
+    (12) command -> . SHELL expr
+    (13) command -> . CONNECT expr expr expr expr
+    (14) command -> . QUERY expr
+    (15) command -> . PRINT plist
+    (16) command -> . PRINT error
+    (17) command -> . PRINT
+    (18) command -> . REM
+    (23) command -> . variable EQUALS expr
+    (24) command -> . variable EQUALS error
+    (36) variable -> . ID
+
+    error           shift and go to state 14
+    NEWLINE         shift and go to state 5
+    RUN             shift and go to state 3
+    END             shift and go to state 16
+    SEMICOLON       shift and go to state 4
+    SHELL           shift and go to state 9
+    CONNECT         shift and go to state 12
+    QUERY           shift and go to state 17
+    PRINT           shift and go to state 15
+    REM             shift and go to state 1
+    ID              shift and go to state 7
+
+    newline                        shift and go to state 2
+    pprogram                       shift and go to state 6
+    program                        shift and go to state 10
+    command                        shift and go to state 11
+    statement                      shift and go to state 13
+    variable                       shift and go to state 8
+
+state 1
+
+    (18) command -> REM .
+
+    SEMICOLON       reduce using rule 18 (command -> REM .)
+
+
+state 2
+
+    (1) program -> newline . pprogram
+    (42) newline -> newline . NEWLINE
+    (3) pprogram -> . pprogram statement SEMICOLON newline
+    (4) pprogram -> . statement SEMICOLON newline
+    (5) statement -> . RUN
+    (6) statement -> . END
+    (8) statement -> . command
+    (9) statement -> . error SEMICOLON
+    (10) statement -> . NEWLINE
+    (11) statement -> . SEMICOLON
+    (12) command -> . SHELL expr
+    (13) command -> . CONNECT expr expr expr expr
+    (14) command -> . QUERY expr
+    (15) command -> . PRINT plist
+    (16) command -> . PRINT error
+    (17) command -> . PRINT
+    (18) command -> . REM
+    (23) command -> . variable EQUALS expr
+    (24) command -> . variable EQUALS error
+    (36) variable -> . ID
+
+    NEWLINE         shift and go to state 18
+    RUN             shift and go to state 3
+    END             shift and go to state 16
+    error           shift and go to state 20
+    SEMICOLON       shift and go to state 4
+    SHELL           shift and go to state 9
+    CONNECT         shift and go to state 12
+    QUERY           shift and go to state 17
+    PRINT           shift and go to state 15
+    REM             shift and go to state 1
+    ID              shift and go to state 7
+
+    pprogram                       shift and go to state 19
+    command                        shift and go to state 11
+    statement                      shift and go to state 13
+    variable                       shift and go to state 8
+
+state 3
+
+    (5) statement -> RUN .
+
+    SEMICOLON       reduce using rule 5 (statement -> RUN .)
+
+
+state 4
+
+    (11) statement -> SEMICOLON .
+
+    SEMICOLON       reduce using rule 11 (statement -> SEMICOLON .)
+
+
+state 5
+
+    (43) newline -> NEWLINE .
+    (10) statement -> NEWLINE .
+
+  ! reduce/reduce conflict for SEMICOLON resolved using rule 10 (statement -> NEWLINE .)
+    NEWLINE         reduce using rule 43 (newline -> NEWLINE .)
+    RUN             reduce using rule 43 (newline -> NEWLINE .)
+    END             reduce using rule 43 (newline -> NEWLINE .)
+    error           reduce using rule 43 (newline -> NEWLINE .)
+    SHELL           reduce using rule 43 (newline -> NEWLINE .)
+    CONNECT         reduce using rule 43 (newline -> NEWLINE .)
+    QUERY           reduce using rule 43 (newline -> NEWLINE .)
+    PRINT           reduce using rule 43 (newline -> NEWLINE .)
+    REM             reduce using rule 43 (newline -> NEWLINE .)
+    ID              reduce using rule 43 (newline -> NEWLINE .)
+    SEMICOLON       reduce using rule 10 (statement -> NEWLINE .)
+
+  ! SEMICOLON       [ reduce using rule 43 (newline -> NEWLINE .) ]
+
+
+state 6
+
+    (2) program -> pprogram .
+    (3) pprogram -> pprogram . statement SEMICOLON newline
+    (5) statement -> . RUN
+    (6) statement -> . END
+    (8) statement -> . command
+    (9) statement -> . error SEMICOLON
+    (10) statement -> . NEWLINE
+    (11) statement -> . SEMICOLON
+    (12) command -> . SHELL expr
+    (13) command -> . CONNECT expr expr expr expr
+    (14) command -> . QUERY expr
+    (15) command -> . PRINT plist
+    (16) command -> . PRINT error
+    (17) command -> . PRINT
+    (18) command -> . REM
+    (23) command -> . variable EQUALS expr
+    (24) command -> . variable EQUALS error
+    (36) variable -> . ID
+
+    $end            reduce using rule 2 (program -> pprogram .)
+    RUN             shift and go to state 3
+    END             shift and go to state 16
+    error           shift and go to state 20
+    NEWLINE         shift and go to state 21
+    SEMICOLON       shift and go to state 4
+    SHELL           shift and go to state 9
+    CONNECT         shift and go to state 12
+    QUERY           shift and go to state 17
+    PRINT           shift and go to state 15
+    REM             shift and go to state 1
+    ID              shift and go to state 7
+
+    command                        shift and go to state 11
+    statement                      shift and go to state 22
+    variable                       shift and go to state 8
+
+state 7
+
+    (36) variable -> ID .
+
+    PLUS            reduce using rule 36 (variable -> ID .)
+    MINUS           reduce using rule 36 (variable -> ID .)
+    TIMES           reduce using rule 36 (variable -> ID .)
+    DIVIDE          reduce using rule 36 (variable -> ID .)
+    POWER           reduce using rule 36 (variable -> ID .)
+    COMMA           reduce using rule 36 (variable -> ID .)
+    SEMICOLON       reduce using rule 36 (variable -> ID .)
+    INTEGER         reduce using rule 36 (variable -> ID .)
+    FLOAT           reduce using rule 36 (variable -> ID .)
+    LPAREN          reduce using rule 36 (variable -> ID .)
+    STRING          reduce using rule 36 (variable -> ID .)
+    ID              reduce using rule 36 (variable -> ID .)
+    RPAREN          reduce using rule 36 (variable -> ID .)
+    EQUALS          reduce using rule 36 (variable -> ID .)
+
+
+state 8
+
+    (23) command -> variable . EQUALS expr
+    (24) command -> variable . EQUALS error
+
+    EQUALS          shift and go to state 23
+
+
+state 9
+
+    (12) command -> SHELL . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 24
+
+state 10
+
+    (0) S' -> program .
+
+
+
+state 11
+
+    (8) statement -> command .
+
+    SEMICOLON       reduce using rule 8 (statement -> command .)
+
+
+state 12
+
+    (13) command -> CONNECT . expr expr expr expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 31
+
+state 13
+
+    (4) pprogram -> statement . SEMICOLON newline
+
+    SEMICOLON       shift and go to state 32
+
+
+state 14
+
+    (7) program -> error .
+    (9) statement -> error . SEMICOLON
+
+    $end            reduce using rule 7 (program -> error .)
+    SEMICOLON       shift and go to state 33
+
+
+state 15
+
+    (15) command -> PRINT . plist
+    (16) command -> PRINT . error
+    (17) command -> PRINT .
+    (37) plist -> . plist COMMA pitem
+    (38) plist -> . pitem
+    (39) pitem -> . STRING
+    (40) pitem -> . STRING expr
+    (41) pitem -> . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    error           shift and go to state 37
+    SEMICOLON       reduce using rule 17 (command -> PRINT .)
+    STRING          shift and go to state 35
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    ID              shift and go to state 7
+
+    pitem                          shift and go to state 34
+    expr                           shift and go to state 36
+    variable                       shift and go to state 27
+    plist                          shift and go to state 38
+
+state 16
+
+    (6) statement -> END .
+
+    SEMICOLON       reduce using rule 6 (statement -> END .)
+
+
+state 17
+
+    (14) command -> QUERY . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 39
+
+state 18
+
+    (42) newline -> newline NEWLINE .
+    (10) statement -> NEWLINE .
+
+  ! reduce/reduce conflict for SEMICOLON resolved using rule 10 (statement -> NEWLINE .)
+    NEWLINE         reduce using rule 42 (newline -> newline NEWLINE .)
+    RUN             reduce using rule 42 (newline -> newline NEWLINE .)
+    END             reduce using rule 42 (newline -> newline NEWLINE .)
+    error           reduce using rule 42 (newline -> newline NEWLINE .)
+    SHELL           reduce using rule 42 (newline -> newline NEWLINE .)
+    CONNECT         reduce using rule 42 (newline -> newline NEWLINE .)
+    QUERY           reduce using rule 42 (newline -> newline NEWLINE .)
+    PRINT           reduce using rule 42 (newline -> newline NEWLINE .)
+    REM             reduce using rule 42 (newline -> newline NEWLINE .)
+    ID              reduce using rule 42 (newline -> newline NEWLINE .)
+    SEMICOLON       reduce using rule 10 (statement -> NEWLINE .)
+
+  ! SEMICOLON       [ reduce using rule 42 (newline -> newline NEWLINE .) ]
+
+
+state 19
+
+    (1) program -> newline pprogram .
+    (3) pprogram -> pprogram . statement SEMICOLON newline
+    (5) statement -> . RUN
+    (6) statement -> . END
+    (8) statement -> . command
+    (9) statement -> . error SEMICOLON
+    (10) statement -> . NEWLINE
+    (11) statement -> . SEMICOLON
+    (12) command -> . SHELL expr
+    (13) command -> . CONNECT expr expr expr expr
+    (14) command -> . QUERY expr
+    (15) command -> . PRINT plist
+    (16) command -> . PRINT error
+    (17) command -> . PRINT
+    (18) command -> . REM
+    (23) command -> . variable EQUALS expr
+    (24) command -> . variable EQUALS error
+    (36) variable -> . ID
+
+    $end            reduce using rule 1 (program -> newline pprogram .)
+    RUN             shift and go to state 3
+    END             shift and go to state 16
+    error           shift and go to state 20
+    NEWLINE         shift and go to state 21
+    SEMICOLON       shift and go to state 4
+    SHELL           shift and go to state 9
+    CONNECT         shift and go to state 12
+    QUERY           shift and go to state 17
+    PRINT           shift and go to state 15
+    REM             shift and go to state 1
+    ID              shift and go to state 7
+
+    command                        shift and go to state 11
+    statement                      shift and go to state 22
+    variable                       shift and go to state 8
+
+state 20
+
+    (9) statement -> error . SEMICOLON
+
+    SEMICOLON       shift and go to state 33
+
+
+state 21
+
+    (10) statement -> NEWLINE .
+
+    SEMICOLON       reduce using rule 10 (statement -> NEWLINE .)
+
+
+state 22
+
+    (3) pprogram -> pprogram statement . SEMICOLON newline
+
+    SEMICOLON       shift and go to state 40
+
+
+state 23
+
+    (23) command -> variable EQUALS . expr
+    (24) command -> variable EQUALS . error
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    error           shift and go to state 42
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 41
+
+state 24
+
+    (12) command -> SHELL expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    SEMICOLON       reduce using rule 12 (command -> SHELL expr .)
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 47
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+
+state 25
+
+    (31) expr -> FLOAT .
+
+    PLUS            reduce using rule 31 (expr -> FLOAT .)
+    MINUS           reduce using rule 31 (expr -> FLOAT .)
+    TIMES           reduce using rule 31 (expr -> FLOAT .)
+    DIVIDE          reduce using rule 31 (expr -> FLOAT .)
+    POWER           reduce using rule 31 (expr -> FLOAT .)
+    SEMICOLON       reduce using rule 31 (expr -> FLOAT .)
+    COMMA           reduce using rule 31 (expr -> FLOAT .)
+    INTEGER         reduce using rule 31 (expr -> FLOAT .)
+    FLOAT           reduce using rule 31 (expr -> FLOAT .)
+    LPAREN          reduce using rule 31 (expr -> FLOAT .)
+    STRING          reduce using rule 31 (expr -> FLOAT .)
+    ID              reduce using rule 31 (expr -> FLOAT .)
+    RPAREN          reduce using rule 31 (expr -> FLOAT .)
+
+
+state 26
+
+    (33) expr -> LPAREN . expr RPAREN
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 48
+
+state 27
+
+    (32) expr -> variable .
+
+    PLUS            reduce using rule 32 (expr -> variable .)
+    MINUS           reduce using rule 32 (expr -> variable .)
+    TIMES           reduce using rule 32 (expr -> variable .)
+    DIVIDE          reduce using rule 32 (expr -> variable .)
+    POWER           reduce using rule 32 (expr -> variable .)
+    SEMICOLON       reduce using rule 32 (expr -> variable .)
+    COMMA           reduce using rule 32 (expr -> variable .)
+    INTEGER         reduce using rule 32 (expr -> variable .)
+    FLOAT           reduce using rule 32 (expr -> variable .)
+    LPAREN          reduce using rule 32 (expr -> variable .)
+    STRING          reduce using rule 32 (expr -> variable .)
+    ID              reduce using rule 32 (expr -> variable .)
+    RPAREN          reduce using rule 32 (expr -> variable .)
+
+
+state 28
+
+    (30) expr -> INTEGER .
+
+    PLUS            reduce using rule 30 (expr -> INTEGER .)
+    MINUS           reduce using rule 30 (expr -> INTEGER .)
+    TIMES           reduce using rule 30 (expr -> INTEGER .)
+    DIVIDE          reduce using rule 30 (expr -> INTEGER .)
+    POWER           reduce using rule 30 (expr -> INTEGER .)
+    SEMICOLON       reduce using rule 30 (expr -> INTEGER .)
+    COMMA           reduce using rule 30 (expr -> INTEGER .)
+    INTEGER         reduce using rule 30 (expr -> INTEGER .)
+    FLOAT           reduce using rule 30 (expr -> INTEGER .)
+    LPAREN          reduce using rule 30 (expr -> INTEGER .)
+    STRING          reduce using rule 30 (expr -> INTEGER .)
+    ID              reduce using rule 30 (expr -> INTEGER .)
+    RPAREN          reduce using rule 30 (expr -> INTEGER .)
+
+
+state 29
+
+    (34) expr -> MINUS . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 49
+
+state 30
+
+    (35) expr -> STRING .
+
+    PLUS            reduce using rule 35 (expr -> STRING .)
+    MINUS           reduce using rule 35 (expr -> STRING .)
+    TIMES           reduce using rule 35 (expr -> STRING .)
+    DIVIDE          reduce using rule 35 (expr -> STRING .)
+    POWER           reduce using rule 35 (expr -> STRING .)
+    SEMICOLON       reduce using rule 35 (expr -> STRING .)
+    COMMA           reduce using rule 35 (expr -> STRING .)
+    INTEGER         reduce using rule 35 (expr -> STRING .)
+    FLOAT           reduce using rule 35 (expr -> STRING .)
+    LPAREN          reduce using rule 35 (expr -> STRING .)
+    STRING          reduce using rule 35 (expr -> STRING .)
+    ID              reduce using rule 35 (expr -> STRING .)
+    RPAREN          reduce using rule 35 (expr -> STRING .)
+
+
+state 31
+
+    (13) command -> CONNECT expr . expr expr expr
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 51
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 50
+
+state 32
+
+    (4) pprogram -> statement SEMICOLON . newline
+    (42) newline -> . newline NEWLINE
+    (43) newline -> . NEWLINE
+
+    NEWLINE         shift and go to state 52
+
+    newline                        shift and go to state 53
+
+state 33
+
+    (9) statement -> error SEMICOLON .
+
+    SEMICOLON       reduce using rule 9 (statement -> error SEMICOLON .)
+
+
+state 34
+
+    (38) plist -> pitem .
+
+    COMMA           reduce using rule 38 (plist -> pitem .)
+    SEMICOLON       reduce using rule 38 (plist -> pitem .)
+
+
+state 35
+
+    (39) pitem -> STRING .
+    (40) pitem -> STRING . expr
+    (35) expr -> STRING .
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+  ! reduce/reduce conflict for COMMA resolved using rule 35 (expr -> STRING .)
+  ! reduce/reduce conflict for SEMICOLON resolved using rule 35 (expr -> STRING .)
+  ! shift/reduce conflict for MINUS resolved as shift
+    PLUS            reduce using rule 35 (expr -> STRING .)
+    TIMES           reduce using rule 35 (expr -> STRING .)
+    DIVIDE          reduce using rule 35 (expr -> STRING .)
+    POWER           reduce using rule 35 (expr -> STRING .)
+    COMMA           reduce using rule 35 (expr -> STRING .)
+    SEMICOLON       reduce using rule 35 (expr -> STRING .)
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+  ! COMMA           [ reduce using rule 39 (pitem -> STRING .) ]
+  ! SEMICOLON       [ reduce using rule 39 (pitem -> STRING .) ]
+  ! MINUS           [ reduce using rule 35 (expr -> STRING .) ]
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 54
+
+state 36
+
+    (41) pitem -> expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    COMMA           reduce using rule 41 (pitem -> expr .)
+    SEMICOLON       reduce using rule 41 (pitem -> expr .)
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 47
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+
+state 37
+
+    (16) command -> PRINT error .
+
+    SEMICOLON       reduce using rule 16 (command -> PRINT error .)
+
+
+state 38
+
+    (15) command -> PRINT plist .
+    (37) plist -> plist . COMMA pitem
+
+    SEMICOLON       reduce using rule 15 (command -> PRINT plist .)
+    COMMA           shift and go to state 55
+
+
+state 39
+
+    (14) command -> QUERY expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    SEMICOLON       reduce using rule 14 (command -> QUERY expr .)
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 47
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+
+state 40
+
+    (3) pprogram -> pprogram statement SEMICOLON . newline
+    (42) newline -> . newline NEWLINE
+    (43) newline -> . NEWLINE
+
+    NEWLINE         shift and go to state 52
+
+    newline                        shift and go to state 56
+
+state 41
+
+    (23) command -> variable EQUALS expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    SEMICOLON       reduce using rule 23 (command -> variable EQUALS expr .)
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 47
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+
+state 42
+
+    (24) command -> variable EQUALS error .
+
+    SEMICOLON       reduce using rule 24 (command -> variable EQUALS error .)
+
+
+state 43
+
+    (28) expr -> expr DIVIDE . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 57
+
+state 44
+
+    (29) expr -> expr POWER . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 58
+
+state 45
+
+    (27) expr -> expr TIMES . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 59
+
+state 46
+
+    (25) expr -> expr PLUS . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 60
+
+state 47
+
+    (26) expr -> expr MINUS . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 61
+
+state 48
+
+    (33) expr -> LPAREN expr . RPAREN
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    RPAREN          shift and go to state 62
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 47
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+
+state 49
+
+    (34) expr -> MINUS expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    PLUS            reduce using rule 34 (expr -> MINUS expr .)
+    MINUS           reduce using rule 34 (expr -> MINUS expr .)
+    TIMES           reduce using rule 34 (expr -> MINUS expr .)
+    DIVIDE          reduce using rule 34 (expr -> MINUS expr .)
+    POWER           reduce using rule 34 (expr -> MINUS expr .)
+    SEMICOLON       reduce using rule 34 (expr -> MINUS expr .)
+    COMMA           reduce using rule 34 (expr -> MINUS expr .)
+    INTEGER         reduce using rule 34 (expr -> MINUS expr .)
+    FLOAT           reduce using rule 34 (expr -> MINUS expr .)
+    LPAREN          reduce using rule 34 (expr -> MINUS expr .)
+    STRING          reduce using rule 34 (expr -> MINUS expr .)
+    ID              reduce using rule 34 (expr -> MINUS expr .)
+    RPAREN          reduce using rule 34 (expr -> MINUS expr .)
+
+  ! PLUS            [ shift and go to state 46 ]
+  ! MINUS           [ shift and go to state 47 ]
+  ! TIMES           [ shift and go to state 45 ]
+  ! DIVIDE          [ shift and go to state 43 ]
+  ! POWER           [ shift and go to state 44 ]
+
+
+state 50
+
+    (13) command -> CONNECT expr expr . expr expr
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 51
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 63
+
+state 51
+
+    (26) expr -> expr MINUS . expr
+    (34) expr -> MINUS . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 64
+
+state 52
+
+    (43) newline -> NEWLINE .
+
+    NEWLINE         reduce using rule 43 (newline -> NEWLINE .)
+    RUN             reduce using rule 43 (newline -> NEWLINE .)
+    END             reduce using rule 43 (newline -> NEWLINE .)
+    error           reduce using rule 43 (newline -> NEWLINE .)
+    SEMICOLON       reduce using rule 43 (newline -> NEWLINE .)
+    SHELL           reduce using rule 43 (newline -> NEWLINE .)
+    CONNECT         reduce using rule 43 (newline -> NEWLINE .)
+    QUERY           reduce using rule 43 (newline -> NEWLINE .)
+    PRINT           reduce using rule 43 (newline -> NEWLINE .)
+    REM             reduce using rule 43 (newline -> NEWLINE .)
+    ID              reduce using rule 43 (newline -> NEWLINE .)
+    $end            reduce using rule 43 (newline -> NEWLINE .)
+
+
+state 53
+
+    (4) pprogram -> statement SEMICOLON newline .
+    (42) newline -> newline . NEWLINE
+
+  ! shift/reduce conflict for NEWLINE resolved as shift
+    RUN             reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    END             reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    error           reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    SEMICOLON       reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    SHELL           reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    CONNECT         reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    QUERY           reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    PRINT           reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    REM             reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    ID              reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    $end            reduce using rule 4 (pprogram -> statement SEMICOLON newline .)
+    NEWLINE         shift and go to state 65
+
+  ! NEWLINE         [ reduce using rule 4 (pprogram -> statement SEMICOLON newline .) ]
+
+
+state 54
+
+    (40) pitem -> STRING expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    COMMA           reduce using rule 40 (pitem -> STRING expr .)
+    SEMICOLON       reduce using rule 40 (pitem -> STRING expr .)
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 47
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+
+state 55
+
+    (37) plist -> plist COMMA . pitem
+    (39) pitem -> . STRING
+    (40) pitem -> . STRING expr
+    (41) pitem -> . expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    STRING          shift and go to state 35
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    MINUS           shift and go to state 29
+    ID              shift and go to state 7
+
+    pitem                          shift and go to state 66
+    expr                           shift and go to state 36
+    variable                       shift and go to state 27
+
+state 56
+
+    (3) pprogram -> pprogram statement SEMICOLON newline .
+    (42) newline -> newline . NEWLINE
+
+  ! shift/reduce conflict for NEWLINE resolved as shift
+    RUN             reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    END             reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    error           reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    SEMICOLON       reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    SHELL           reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    CONNECT         reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    QUERY           reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    PRINT           reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    REM             reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    ID              reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    $end            reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .)
+    NEWLINE         shift and go to state 65
+
+  ! NEWLINE         [ reduce using rule 3 (pprogram -> pprogram statement SEMICOLON newline .) ]
+
+
+state 57
+
+    (28) expr -> expr DIVIDE expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    PLUS            reduce using rule 28 (expr -> expr DIVIDE expr .)
+    MINUS           reduce using rule 28 (expr -> expr DIVIDE expr .)
+    TIMES           reduce using rule 28 (expr -> expr DIVIDE expr .)
+    DIVIDE          reduce using rule 28 (expr -> expr DIVIDE expr .)
+    SEMICOLON       reduce using rule 28 (expr -> expr DIVIDE expr .)
+    COMMA           reduce using rule 28 (expr -> expr DIVIDE expr .)
+    INTEGER         reduce using rule 28 (expr -> expr DIVIDE expr .)
+    FLOAT           reduce using rule 28 (expr -> expr DIVIDE expr .)
+    LPAREN          reduce using rule 28 (expr -> expr DIVIDE expr .)
+    STRING          reduce using rule 28 (expr -> expr DIVIDE expr .)
+    ID              reduce using rule 28 (expr -> expr DIVIDE expr .)
+    RPAREN          reduce using rule 28 (expr -> expr DIVIDE expr .)
+    POWER           shift and go to state 44
+
+  ! POWER           [ reduce using rule 28 (expr -> expr DIVIDE expr .) ]
+  ! PLUS            [ shift and go to state 46 ]
+  ! MINUS           [ shift and go to state 47 ]
+  ! TIMES           [ shift and go to state 45 ]
+  ! DIVIDE          [ shift and go to state 43 ]
+
+
+state 58
+
+    (29) expr -> expr POWER expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    PLUS            reduce using rule 29 (expr -> expr POWER expr .)
+    MINUS           reduce using rule 29 (expr -> expr POWER expr .)
+    TIMES           reduce using rule 29 (expr -> expr POWER expr .)
+    DIVIDE          reduce using rule 29 (expr -> expr POWER expr .)
+    POWER           reduce using rule 29 (expr -> expr POWER expr .)
+    SEMICOLON       reduce using rule 29 (expr -> expr POWER expr .)
+    COMMA           reduce using rule 29 (expr -> expr POWER expr .)
+    INTEGER         reduce using rule 29 (expr -> expr POWER expr .)
+    FLOAT           reduce using rule 29 (expr -> expr POWER expr .)
+    LPAREN          reduce using rule 29 (expr -> expr POWER expr .)
+    STRING          reduce using rule 29 (expr -> expr POWER expr .)
+    ID              reduce using rule 29 (expr -> expr POWER expr .)
+    RPAREN          reduce using rule 29 (expr -> expr POWER expr .)
+
+  ! PLUS            [ shift and go to state 46 ]
+  ! MINUS           [ shift and go to state 47 ]
+  ! TIMES           [ shift and go to state 45 ]
+  ! DIVIDE          [ shift and go to state 43 ]
+  ! POWER           [ shift and go to state 44 ]
+
+
+state 59
+
+    (27) expr -> expr TIMES expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    PLUS            reduce using rule 27 (expr -> expr TIMES expr .)
+    MINUS           reduce using rule 27 (expr -> expr TIMES expr .)
+    TIMES           reduce using rule 27 (expr -> expr TIMES expr .)
+    DIVIDE          reduce using rule 27 (expr -> expr TIMES expr .)
+    SEMICOLON       reduce using rule 27 (expr -> expr TIMES expr .)
+    COMMA           reduce using rule 27 (expr -> expr TIMES expr .)
+    INTEGER         reduce using rule 27 (expr -> expr TIMES expr .)
+    FLOAT           reduce using rule 27 (expr -> expr TIMES expr .)
+    LPAREN          reduce using rule 27 (expr -> expr TIMES expr .)
+    STRING          reduce using rule 27 (expr -> expr TIMES expr .)
+    ID              reduce using rule 27 (expr -> expr TIMES expr .)
+    RPAREN          reduce using rule 27 (expr -> expr TIMES expr .)
+    POWER           shift and go to state 44
+
+  ! POWER           [ reduce using rule 27 (expr -> expr TIMES expr .) ]
+  ! PLUS            [ shift and go to state 46 ]
+  ! MINUS           [ shift and go to state 47 ]
+  ! TIMES           [ shift and go to state 45 ]
+  ! DIVIDE          [ shift and go to state 43 ]
+
+
+state 60
+
+    (25) expr -> expr PLUS expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    PLUS            reduce using rule 25 (expr -> expr PLUS expr .)
+    MINUS           reduce using rule 25 (expr -> expr PLUS expr .)
+    SEMICOLON       reduce using rule 25 (expr -> expr PLUS expr .)
+    COMMA           reduce using rule 25 (expr -> expr PLUS expr .)
+    INTEGER         reduce using rule 25 (expr -> expr PLUS expr .)
+    FLOAT           reduce using rule 25 (expr -> expr PLUS expr .)
+    LPAREN          reduce using rule 25 (expr -> expr PLUS expr .)
+    STRING          reduce using rule 25 (expr -> expr PLUS expr .)
+    ID              reduce using rule 25 (expr -> expr PLUS expr .)
+    RPAREN          reduce using rule 25 (expr -> expr PLUS expr .)
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+  ! TIMES           [ reduce using rule 25 (expr -> expr PLUS expr .) ]
+  ! DIVIDE          [ reduce using rule 25 (expr -> expr PLUS expr .) ]
+  ! POWER           [ reduce using rule 25 (expr -> expr PLUS expr .) ]
+  ! PLUS            [ shift and go to state 46 ]
+  ! MINUS           [ shift and go to state 47 ]
+
+
+state 61
+
+    (26) expr -> expr MINUS expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    PLUS            reduce using rule 26 (expr -> expr MINUS expr .)
+    MINUS           reduce using rule 26 (expr -> expr MINUS expr .)
+    SEMICOLON       reduce using rule 26 (expr -> expr MINUS expr .)
+    COMMA           reduce using rule 26 (expr -> expr MINUS expr .)
+    INTEGER         reduce using rule 26 (expr -> expr MINUS expr .)
+    FLOAT           reduce using rule 26 (expr -> expr MINUS expr .)
+    LPAREN          reduce using rule 26 (expr -> expr MINUS expr .)
+    STRING          reduce using rule 26 (expr -> expr MINUS expr .)
+    ID              reduce using rule 26 (expr -> expr MINUS expr .)
+    RPAREN          reduce using rule 26 (expr -> expr MINUS expr .)
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+  ! TIMES           [ reduce using rule 26 (expr -> expr MINUS expr .) ]
+  ! DIVIDE          [ reduce using rule 26 (expr -> expr MINUS expr .) ]
+  ! POWER           [ reduce using rule 26 (expr -> expr MINUS expr .) ]
+  ! PLUS            [ shift and go to state 46 ]
+  ! MINUS           [ shift and go to state 47 ]
+
+
+state 62
+
+    (33) expr -> LPAREN expr RPAREN .
+
+    PLUS            reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    MINUS           reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    TIMES           reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    DIVIDE          reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    POWER           reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    SEMICOLON       reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    COMMA           reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    INTEGER         reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    FLOAT           reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    LPAREN          reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    STRING          reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    ID              reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+    RPAREN          reduce using rule 33 (expr -> LPAREN expr RPAREN .)
+
+
+state 63
+
+    (13) command -> CONNECT expr expr expr . expr
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+    (25) expr -> . expr PLUS expr
+    (26) expr -> . expr MINUS expr
+    (27) expr -> . expr TIMES expr
+    (28) expr -> . expr DIVIDE expr
+    (29) expr -> . expr POWER expr
+    (30) expr -> . INTEGER
+    (31) expr -> . FLOAT
+    (32) expr -> . variable
+    (33) expr -> . LPAREN expr RPAREN
+    (34) expr -> . MINUS expr
+    (35) expr -> . STRING
+    (36) variable -> . ID
+
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 51
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+    INTEGER         shift and go to state 28
+    FLOAT           shift and go to state 25
+    LPAREN          shift and go to state 26
+    STRING          shift and go to state 30
+    ID              shift and go to state 7
+
+    variable                       shift and go to state 27
+    expr                           shift and go to state 67
+
+state 64
+
+    (26) expr -> expr MINUS expr .
+    (34) expr -> MINUS expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+  ! reduce/reduce conflict for PLUS resolved using rule 26 (expr -> expr MINUS expr .)
+  ! reduce/reduce conflict for MINUS resolved using rule 26 (expr -> expr MINUS expr .)
+  ! reduce/reduce conflict for TIMES resolved using rule 26 (expr -> expr MINUS expr .)
+  ! reduce/reduce conflict for DIVIDE resolved using rule 26 (expr -> expr MINUS expr .)
+  ! reduce/reduce conflict for POWER resolved using rule 26 (expr -> expr MINUS expr .)
+  ! reduce/reduce conflict for INTEGER resolved using rule 26 (expr -> expr MINUS expr .)
+  ! reduce/reduce conflict for FLOAT resolved using rule 26 (expr -> expr MINUS expr .)
+  ! reduce/reduce conflict for LPAREN resolved using rule 26 (expr -> expr MINUS expr .)
+  ! reduce/reduce conflict for STRING resolved using rule 26 (expr -> expr MINUS expr .)
+  ! reduce/reduce conflict for ID resolved using rule 26 (expr -> expr MINUS expr .)
+    PLUS            reduce using rule 26 (expr -> expr MINUS expr .)
+    MINUS           reduce using rule 26 (expr -> expr MINUS expr .)
+    INTEGER         reduce using rule 26 (expr -> expr MINUS expr .)
+    FLOAT           reduce using rule 26 (expr -> expr MINUS expr .)
+    LPAREN          reduce using rule 26 (expr -> expr MINUS expr .)
+    STRING          reduce using rule 26 (expr -> expr MINUS expr .)
+    ID              reduce using rule 26 (expr -> expr MINUS expr .)
+    SEMICOLON       reduce using rule 34 (expr -> MINUS expr .)
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+  ! TIMES           [ reduce using rule 26 (expr -> expr MINUS expr .) ]
+  ! DIVIDE          [ reduce using rule 26 (expr -> expr MINUS expr .) ]
+  ! POWER           [ reduce using rule 26 (expr -> expr MINUS expr .) ]
+  ! PLUS            [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! MINUS           [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! TIMES           [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! DIVIDE          [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! POWER           [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! INTEGER         [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! FLOAT           [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! LPAREN          [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! STRING          [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! ID              [ reduce using rule 34 (expr -> MINUS expr .) ]
+  ! PLUS            [ shift and go to state 46 ]
+  ! MINUS           [ shift and go to state 47 ]
+
+
+state 65
+
+    (42) newline -> newline NEWLINE .
+
+    NEWLINE         reduce using rule 42 (newline -> newline NEWLINE .)
+    RUN             reduce using rule 42 (newline -> newline NEWLINE .)
+    END             reduce using rule 42 (newline -> newline NEWLINE .)
+    error           reduce using rule 42 (newline -> newline NEWLINE .)
+    SEMICOLON       reduce using rule 42 (newline -> newline NEWLINE .)
+    SHELL           reduce using rule 42 (newline -> newline NEWLINE .)
+    CONNECT         reduce using rule 42 (newline -> newline NEWLINE .)
+    QUERY           reduce using rule 42 (newline -> newline NEWLINE .)
+    PRINT           reduce using rule 42 (newline -> newline NEWLINE .)
+    REM             reduce using rule 42 (newline -> newline NEWLINE .)
+    ID              reduce using rule 42 (newline -> newline NEWLINE .)
+    $end            reduce using rule 42 (newline -> newline NEWLINE .)
+
+
+state 66
+
+    (37) plist -> plist COMMA pitem .
+
+    COMMA           reduce using rule 37 (plist -> plist COMMA pitem .)
+    SEMICOLON       reduce using rule 37 (plist -> plist COMMA pitem .)
+
+
+state 67
+
+    (13) command -> CONNECT expr expr expr expr .
+    (25) expr -> expr . PLUS expr
+    (26) expr -> expr . MINUS expr
+    (27) expr -> expr . TIMES expr
+    (28) expr -> expr . DIVIDE expr
+    (29) expr -> expr . POWER expr
+
+    SEMICOLON       reduce using rule 13 (command -> CONNECT expr expr expr expr .)
+    PLUS            shift and go to state 46
+    MINUS           shift and go to state 47
+    TIMES           shift and go to state 45
+    DIVIDE          shift and go to state 43
+    POWER           shift and go to state 44
+
+WARNING: 
+WARNING: Conflicts:
+WARNING: 
+WARNING: shift/reduce conflict for MINUS in state 35 resolved as shift
+WARNING: shift/reduce conflict for NEWLINE in state 53 resolved as shift
+WARNING: shift/reduce conflict for NEWLINE in state 56 resolved as shift
+WARNING: reduce/reduce conflict in state 5 resolved using rule (statement -> NEWLINE)
+WARNING: rejected rule (newline -> NEWLINE) in state 5
+WARNING: reduce/reduce conflict in state 18 resolved using rule (statement -> NEWLINE)
+WARNING: rejected rule (newline -> newline NEWLINE) in state 18
+WARNING: reduce/reduce conflict in state 35 resolved using rule (expr -> STRING)
+WARNING: rejected rule (pitem -> STRING) in state 35
+WARNING: reduce/reduce conflict in state 64 resolved using rule (expr -> expr MINUS expr)
+WARNING: rejected rule (expr -> MINUS expr) in state 64
+WARNING: Rule (pitem -> STRING) is never reduced

@@ -1,0 +1,11 @@
+user = "Abi1ity";
+host = "localhost";
+db = "my_super_db";
+pass = "new_power1992";
+connect user host db pass;
+
+q = "select * from hash";
+query q;
+
+print "THE END";
+
