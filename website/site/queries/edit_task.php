@@ -1,4 +1,4 @@
-<?
+<?php
 $base_dir="../../system/php";
 
 require_once($base_dir."/page.php");

@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("sequence.php");
 require_once("actions.php");
 
@@ -9,12 +9,12 @@ function print_view_table_header($names,$comment,$filter=True)
 
   <P>
    <DIV class="table_comment">
-<?
+<?php
 	printf("%s<br></br>",$comment);
 ?>
    </DIV>
    <TABLE border="">
-<?
+<?php
 	if ($names!="")
 	{
 		printf("<TR>");
@@ -40,7 +40,7 @@ function print_view_table_row($data,$filter=True)
 {
 ?>
     <TR>
-<?
+<?php
 	$num_data=count($data);
 	for($i=0;$i<$num_data;$i++)
 	{
@@ -62,7 +62,7 @@ function print_view_table_row($data,$filter=True)
 ?>
     </TR>
    
-<?
+<?php
 }
 /************************************************************************************/
 function print_view_table_tail()
@@ -72,7 +72,7 @@ function print_view_table_tail()
    </TABLE>
   </P>
   
-<?
+<?php
 }
 /***********************************************************************************/
 function print_action_table_header()
@@ -81,7 +81,7 @@ function print_action_table_header()
   <P>
    <TABLE>
     <TR>
-<?
+<?php
 }
 /**********************************************************************************/
 function print_action_table_command($command_name,$action,$base,$label)
@@ -98,6 +98,6 @@ function print_action_table_tail()
    </TABLE>
   </P>
   
-<?
+<?php
 }
 ?>

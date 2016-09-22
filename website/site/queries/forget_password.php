@@ -1,4 +1,4 @@
-<?
+<?php
 $base_dir="../../system/php";
 
 require_once($base_dir."/page.php");
@@ -161,7 +161,7 @@ print_page_header("Password restore","..");
  <p>
    Read email in your mailbox.
  </p>
-<?
+<?php
 print_page_tail("..");
 
 ?>

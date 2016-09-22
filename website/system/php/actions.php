@@ -1,4 +1,4 @@
-<?
+<?php
 function get_action_string($action_name,$action,$base_path,$label)
 {
     $str ="\t\t<A href=\"${action}\" >";

@@ -1,4 +1,4 @@
-<?
+<?php
 
 function get_and_increment_id($lock_name,$barrier,$base)
 {

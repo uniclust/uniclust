@@ -1,4 +1,4 @@
-<?
+<?php
  /**************************************************************************/
  function format_sequence($seq)
  {
@@ -24,7 +24,7 @@
  ?> 
   <FONT face="courier">
   <TABLE>
- <?
+ <?php
   $len=strlen($seq);
   $j=0;
   $k=0;
@@ -55,7 +55,7 @@
 ?>
 </TABLE>
 </FONT>
-<?
+<?php
  }
 /***********************************************************************************/
 function sequence_compare($begin,$end,$full_sequence,$sequence)

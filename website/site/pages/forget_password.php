@@ -1,4 +1,4 @@
-<?
+<?php
 
  $base_dir="../../system/php";
 
@@ -14,7 +14,7 @@
   If you forgot your password you can recover it by means of login and email.<br>
   Type them on the registration page and you will receive an email with a special key.   
  </P>
-<?
+<?php
 
  printf("<P><A href=\"http://$HTTP_HOST/$SITE_PATH\">Go to the root page</A></P>");
 
