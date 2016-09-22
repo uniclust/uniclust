@@ -1,4 +1,4 @@
-<?
+<?php
 $base="../../system/php";
 
 

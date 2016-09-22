@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("page.php");
 
 $error_string="";

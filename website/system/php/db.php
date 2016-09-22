@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("../../etc/global_variables.php");
 require_once("page.php");
 

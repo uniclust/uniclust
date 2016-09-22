@@ -1,4 +1,4 @@
-<?
+<?php
 
  $base_dir="../system/php";
 
@@ -25,9 +25,9 @@
 	to the remote execution queue. The system transfers the data from finished tasks to the user 
 	directory by the use of periodic check for existing data.
 	And then the user will receive an email informing that the processing of his task is done or rejected.<br></br>
-	You should <? print("<A href=\"https://$htpps_host_with_site_path/pages/create_user.php\">register</A>"); ?> 
+	You should <?php print("<A href=\"https://$htpps_host_with_site_path/pages/create_user.php\">register</A>"); ?>
 	to use the multiprocessor system. Or, if you already have an account on this website, visit your 
-	<? print("<A href=\"https://$htpps_host_with_site_path/pages/main.php\">personal user page</A>"); ?>.
+	<?php print("<A href=\"https://$htpps_host_with_site_path/pages/main.php\">personal user page</A>"); ?>.
   </P>
   </font>
 
@@ -44,7 +44,7 @@
 
   <p style="text-align:left"><font size="+1"><b>References</b></font></p>
   
-<?
+<?php
 	print_table_header();
 		print_view_table_row
 		(

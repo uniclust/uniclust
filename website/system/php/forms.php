@@ -1,4 +1,4 @@
-<?
+<?php
 
 require_once("sequence.php");
 
@@ -9,7 +9,7 @@ function print_null_input($value,$comment,$filter=True)
 ?>
  <TR>
   <TD class="general">
-<?
+<?php
     $value=stripslashes($value);
     if($filter) $value=htmlspecialchars($value);
 	if ($value=="")
@@ -19,13 +19,13 @@ function print_null_input($value,$comment,$filter=True)
 ?>
   </TD>
   <TD class="general">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
   </TD>
  </TR>
  
-<?
+<?php
 	return;
 }
 /************************************************************************************/
@@ -34,18 +34,18 @@ function print_file_input($name,$comment)
 ?>
  <TR>
   <TD class="general">
-<?
+<?php
 	printf("<INPUT type=\"file\" name=\"%s\">",$name);
 ?>
   </TD>
   <TD class="general">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
   </TD>
  </TR>
  
-<?
+<?php
 	return;
 
 }
@@ -60,18 +60,18 @@ function print_text_input($name,$value,$comment,$filter=True)
 ?>
  <TR>
   <TD class="general">
-<?
+<?php
 	printf("<INPUT type=\"text\" name=\"%s\" value=\"%s\" width=\"100%%\" style=\"text-align:center\">",$name,$value);
 ?>
   </TD>
   <TD class="general">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
   </TD>
  </TR>
  
-<?
+<?php
 	return;
 }
 /************************************************************************************/
@@ -84,18 +84,18 @@ function print_password_input($name,$value,$comment,$filter=True)
 ?>
  <TR>
   <TD class="general">
-<?
+<?php
 	printf("<INPUT type=\"password\" name=\"%s\" value=\"%s\" width=\"100%%\" style=\"text-align:center\">",$name,$value);
 ?>
   </TD>
   <TD class="general">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
   </TD>
  </TR>
  
-<?
+<?php
 	return;
 }
 /***********************************************************************************/
@@ -108,7 +108,7 @@ function print_checkbox_input($name,$value,$checked,$comment,$filter=True)
 ?>
  <TR>
   <TD class="general">
-<?
+<?php
 	if ($checked=="yes")
 		printf("<INPUT type=\"checkbox\" name=\"%s\" value=\"%s\" checked>",$name,$value);
 	else
@@ -116,13 +116,13 @@ function print_checkbox_input($name,$value,$checked,$comment,$filter=True)
 ?>
   </TD>
   <TD class="general">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
   </TD>
  </TR>
 
-<?
+<?php
 	return;
 }
 /***********************************************************************************/
@@ -131,7 +131,7 @@ function print_radio_input($var,$values,$names,$checked_value,$comment,$filter=T
 ?>
  <TR>
   <TD>
-<?
+<?php
 	$item_num=count($names);
 	if (($item_num>0) && ($item_num==count($values)))
 	{
@@ -158,13 +158,13 @@ function print_radio_input($var,$values,$names,$checked_value,$comment,$filter=T
 ?>
   </TD>
   <TD class="general">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
   </TD>
  </TR>
 
-<?
+<?php
 	return;
 }
 /************************************************************************************/
@@ -177,20 +177,20 @@ function print_textarea_input($name,$value,$comment,$filter=True)
 ?>
  <TR>
   <TD class="general">
-<?
+<?php
 	printf("<TEXTAREA name=\"%s\" rows=\"10\" cols=\"66\">",$name);
 	printf("%s",$value);
 ?>
 </TEXTAREA>
   </TD>
   <TD class="general">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
   </TD>
  </TR>
  
-<?
+<?php
 	return;
 
 }
@@ -203,20 +203,20 @@ function print_sequence_input($name,$sequence,$comment)
 ?>
  <TR>
   <TD class="general">
-<?
+<?php
 	printf("<TEXTAREA name=\"%s\" rows=\"10\" cols=\"66\">",$name);
 	printf("%s",$sequence);
 ?>
 </TEXTAREA>
   </TD>
   <TD class="general">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
   </TD>
  </TR>
  
-<?
+<?php
 	return;
 
 }
@@ -232,7 +232,7 @@ function print_select_input($name,$lables,$values, $default_value, $comment,$fil
 
  <TR>
    <TD class="general">
-<?
+<?php
 	printf("<SELECT name=\"%s\">",$name);
 	
 	if ($def_val_indx<$num_lables)
@@ -295,13 +295,13 @@ function print_select_input($name,$lables,$values, $default_value, $comment,$fil
 ?>
    </TD>
   <TD class="general">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
   </TD>
  </TR>
  
-<?
+<?php
 	return;
 }
 /*************************************************************************************/
@@ -318,13 +318,13 @@ function print_submit_input($name,$text)
   
   <P>
    <CENTER>
-<?
+<?php
 	printf("<INPUT type=\"submit\" name=\"%s\" value=\"%s\">",$name,$text);
 ?>
    </CENTER>
   </P>
 
-<?
+<?php
 }
 /*************************************************************************************/
 function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
@@ -341,7 +341,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
    </DIV>
   </P>
   
-<?
+<?php
 	print_table_header();
 
 	$chromosomes=array
@@ -392,7 +392,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
    </DIV>
   </P>
   
-<?
+<?php
 
 	print_table_header();
 ?>
@@ -400,7 +400,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
   <TD class="general">
   <TABLE>
   <TR>
-<?
+<?php
 	
 	if($band_0=="q")
 	{
@@ -412,7 +412,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
         <OPTION value=""></OPTION>
       </SELECT>
      </TD>
-<?
+<?php
 	}
 	
 	if($band_0=="p")
@@ -425,7 +425,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
         <OPTION value=""></OPTION>
       </SELECT>
      </TD>
-<?
+<?php
 	}
 	
 	if($band_0=="")
@@ -439,7 +439,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
       </SELECT>
      </TD>
 
-<?
+<?php
 	}
 ?>
      
@@ -451,7 +451,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
 	   name="band_1"
 	   size="6"
 	   maxlength="6"
-<?
+<?php
 	printf("value=\"%s\"",$band_1);
 ?>
 	>
@@ -465,7 +465,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
 	   name="band_2"
 	   size="6"
 	   maxlength="6"
-<?
+<?php
 	printf("value=\"%s\"",$band_2);
 ?>
 	>
@@ -479,7 +479,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
 	   name="band_3"
 	   size="6"
 	   maxlength="6"
-<?
+<?php
 	printf("value=\"%s\"",$band_3);
 ?>
 	>
@@ -489,7 +489,7 @@ function print_genome_location_input($chr,$band_0,$band_1,$band_2,$band_3)
   </TD>
   </TR>
 
-<?
+<?php
 	print_table_tail();
 }
 /*************************************************************************************/
@@ -520,7 +520,7 @@ function print_table_header()
   <P>
   <TABLE border="">
 
-<?
+<?php
 }
 /************************************************************************************/
 function print_table_header_name($comment)
@@ -531,12 +531,12 @@ function print_table_header_name($comment)
   <TABLE border="">
 
    <DIV class="table_comment">
-<?
+<?php
 	printf("&nbsp;%s&nbsp;",$comment);
 ?>
    </DIV>
   
-<?
+<?php
 }
 
 /************************************************************************************/
@@ -547,7 +547,7 @@ function print_table_tail()
   </TABLE>
   </P>
   
-<?
+<?php
 }
 /***********************************************************************************/
 function print_main_table_button($name,$status_button,$base)
@@ -556,7 +556,7 @@ function print_main_table_button($name,$status_button,$base)
 ?>
  <TR>
   <TD>
-<?
+<?php
 	if($status_button=="unpushed")
 		printf("<A href=\"main.php?table=%s\">",$name);
     
@@ -567,13 +567,13 @@ function print_main_table_button($name,$status_button,$base)
         height="50"
         width="150"
      >
-<?
+<?php
 	if($status_button=="unpushed")
 		printf("</A>");
 ?>
   </TD>
  </TR> 
-<?
+<?php
 }
 /************************************************************************************/
 

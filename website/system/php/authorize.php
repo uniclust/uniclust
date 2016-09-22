@@ -1,4 +1,4 @@
-<?
+<?php
 require_once("page.php");
 require_once("variables.php");
 require_once("forms.php");
@@ -30,7 +30,7 @@ function authorize()
 			<P>You need to authorize yourself. If you have not created an account please visit 
 			<a href="../pages/create_user.php">this page</a>. If you forgot the password or if you intend 
 			to change it, please visit <a href="../pages/forget_password.php">this page</a>.</P>
-<?
+<?php
 			print_form_header("auth","https://$host/$path/queries/authorize.php");
 				print_table_header();
 					print_text_input("login","","Login");

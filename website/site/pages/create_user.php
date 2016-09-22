@@ -1,4 +1,4 @@
-<?
+<?php
 
  $base_dir="../../system/php";
 
@@ -16,7 +16,7 @@
   the registration will be done and you will be asked to set a password.
  </P>
 
-<?
+<?php
  printf(" <P><A href=\"http://$HTTP_HOST/$SITE_PATH\">Go to the root page</A></P>");
 
  print_form_header("auth","../queries/create_user.php");
