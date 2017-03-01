@@ -21,6 +21,7 @@ CREATE TABLE `multiprocessors` (
   `num_available_procs` int(10) unsigned NOT NULL,
   `site_url` varchar(250) DEFAULT NULL,
   `path` blob NOT NULL,
+  -- пользователь для работы на суперкомпьютере
   `user_on_it` varchar(20) NOT NULL,
   `host` varchar(250) NOT NULL,
   `port` int(11) DEFAULT NULL,
@@ -90,7 +91,8 @@ CREATE TABLE `operations` (
   `file_id` int(11) DEFAULT NULL,
   `oper_type` enum('copyto','copyfrom','remove') DEFAULT NULL,
   `multiprocessor_id` int(11) DEFAULT NULL,
-  `status` enum('new','running','ready','refused','error') DEFAULT NULL,
+  `status` enum('new','running','finished','canceled','error') DEFAULT NULL,
+  `error_message` text DEFAULT NULL,
   PRIMARY KEY (`operation_id`),
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -125,7 +127,7 @@ DROP TABLE IF EXISTS `files`;
 CREATE TABLE `files` (
   `file_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(512) DEFAULT NULL,
-  `status` enum('ready','running','error') DEFAULT NULL,
+  `status` enum('ready','processing','error') DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `size` int(11) DEFAULT NULL,
   PRIMARY KEY (`file_id`),
