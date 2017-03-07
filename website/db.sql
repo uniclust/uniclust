@@ -93,7 +93,7 @@ CREATE TABLE `operations` (
   `multiprocessor_id` int(11) DEFAULT NULL,
   `status` enum('new','running','finished','canceled','error') DEFAULT NULL,
   `error_message` text DEFAULT NULL,
-  PRIMARY KEY (`operation_id`),
+  PRIMARY KEY (`operation_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -106,7 +106,7 @@ CREATE TABLE `applications` (
   `name` varchar(25) NOT NULL,
   `arguments_description` blob NOT NULL,
   `short_description` text,
-  PRIMARY KEY (`application_id`),
+  PRIMARY KEY (`application_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -117,7 +117,7 @@ CREATE TABLE `apps_on_multiprocessors` (
   `application_id` int(11) NOT NULL AUTO_INCREMENT,
   `multiprocessor_id` int(11) NOT NULL,
   `settings` blob NOT NULL,
-  PRIMARY KEY (`application_id`),
+  PRIMARY KEY (`application_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 
 --
@@ -130,7 +130,7 @@ CREATE TABLE `files` (
   `status` enum('ready','processing','error') DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `size` int(11) DEFAULT NULL,
-  PRIMARY KEY (`file_id`),
+  PRIMARY KEY (`file_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -146,7 +146,7 @@ CREATE TABLE `filecache` (
   `write_counter` int(11) DEFAULT NULL,
   `last_read` datetime DEFAULT NULL,
   `last_write` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
+  PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -160,7 +160,7 @@ CREATE TABLE `downuploadings` (
   `client_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `direction` enum('to','from') DEFAULT NULL,
-  PRIMARY KEY (`id`),
+  PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -171,7 +171,7 @@ CREATE TABLE `tasks_files` (
   `task_id` int(11) NOT NULL,
   `file_id` int(11) NOT NULL,
   `access_mode` enum('r','w','rw') DEFAULT NULL,
-  PRIMARY KEY (`file_id`,`task_id`),
+  PRIMARY KEY (`file_id`,`task_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -182,7 +182,7 @@ CREATE TABLE `clients` (
   `client_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `auth_key` varchar(256) DEFAULT NULL,
-  PRIMARY KEY (`client_id`),
+  PRIMARY KEY (`client_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
