@@ -139,6 +139,7 @@ CREATE TABLE `files` (
 DROP TABLE IF EXISTS `filecache`;
 CREATE TABLE `filecache` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `file_id` int(11) DEFAULT NULL,
   `operation_id` int(11) DEFAULT NULL,
   `multiprocessor_id` int(11) DEFAULT NULL,
   `status` enum('OK','transfer') DEFAULT NULL,
@@ -199,6 +200,7 @@ ALTER TABLE `applications` ADD FOREIGN KEY (application_id) REFERENCES `apps_on_
 ALTER TABLE `apps_on_multiprocessors` ADD FOREIGN KEY (multiprocessor_id) REFERENCES `multiprocessors` (`multiprocessor_id`);
 ALTER TABLE `files` ADD FOREIGN KEY (file_id) REFERENCES `tasks_files` (`file_id`);
 ALTER TABLE `files` ADD FOREIGN KEY (user_id) REFERENCES `users` (`user_id`);
+ALTER TABLE `filecache` ADD FOREIGN KEY (file_id) REFERENCES `files` (`file_id`);
 ALTER TABLE `filecache` ADD FOREIGN KEY (operation_id) REFERENCES `operations` (`operation_id`);
 ALTER TABLE `filecache` ADD FOREIGN KEY (multiprocessor_id) REFERENCES `multiprocessors` (`multiprocessor_id`);
 ALTER TABLE `downuploadings` ADD FOREIGN KEY (file_id) REFERENCES `files` (`file_id`);
