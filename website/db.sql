@@ -140,7 +140,6 @@ DROP TABLE IF EXISTS `filecache`;
 CREATE TABLE `filecache` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `file_id` int(11) DEFAULT NULL,
-  `operation_id` int(11) DEFAULT NULL,
   `multiprocessor_id` int(11) DEFAULT NULL,
   `status` enum('OK','transfer') DEFAULT NULL,
   `read_counter` int(11) DEFAULT NULL,
@@ -172,6 +171,7 @@ CREATE TABLE `tasks_files` (
   `task_id` int(11) NOT NULL,
   `file_id` int(11) NOT NULL,
   `access_mode` enum('r','w','rw') DEFAULT NULL,
+  `status` int(1) NOT NULL,
   PRIMARY KEY (`file_id`,`task_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
