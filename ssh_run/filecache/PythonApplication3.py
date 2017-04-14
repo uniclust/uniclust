@@ -42,7 +42,7 @@ def start_work():
 
     curs=db.cursor();
 
-   # filecache.check_file_used(curs);
+    filecache.check_file_used(curs);
 
     query=\
     """

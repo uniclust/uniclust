@@ -151,7 +151,7 @@ def post_add_file_to_cache( curs, file_id, multi_id ):
     query = "UPDATE `filecache` SET `status` = 'OK' WHERE `file_id`='%d' AND `multiprocessor_id`='%d'"%(file_id, multi_id);
     curs.execute(query);
 
-def get_multi_id_btid( task_id ):
+def get_multi_id_btid(curs, task_id ):
     DEBUG = global_vars.DEBUG;
     query = "SELECT `multiprocessor_id` from `tasks` where `task_id` = '%d'"%task_id;
     curs.execute(query);
@@ -166,7 +166,7 @@ def get_multi_id_btid( task_id ):
 
 def check_file_used(curs):
     DEBUG = global_vars.DEBUG;
-    query = "SELECT `task_id`, `file_id`, `access_mode` FROM `task_files` where `status` = '0'";
+    query = "SELECT `task_id`, `file_id`, `access_mode` FROM `tasks_files` where `status` = '0'";
     curs.execute(query);
 
     result = curs.fetchall();
@@ -182,14 +182,14 @@ def check_file_used(curs):
         access_mode = result[i][2];
 
         #узнать Multi_id
-        multi_id = get_multi_id_btid(task_id);
+        multi_id = get_multi_id_btid(curs, task_id);
 
         if access_mode == 'r':
-            query = "update `filecache` SET `read_counter` = `read_counter`+1 where `file_id'='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
+            query = "update `filecache` SET `read_counter` = `read_counter`+1 where `file_id`='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
         elif access_mode == 'w':
-            query = "update `filecache` SET `write_counter` = `write_counter`+1 where `file_id'='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
+            query = "update `filecache` SET `write_counter` = `write_counter`+1 where `file_id`='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
         else:
-            query = "update `filecache` SET `read_counter` = `read_counter`+1,`write_counter` = `write_counter`+1  where `file_id'='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
+            query = "update `filecache` SET `read_counter` = `read_counter`+1,`write_counter` = `write_counter`+1  where `file_id`='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
 
         curs.execute(query);
 
@@ -197,8 +197,12 @@ def check_file_used(curs):
         if DEBUG:
             print query;
 
-        query = "UPDATE `task_files` SET `status` = '1' WHERE `task_id`='%d' and file_id='%d'"%(task_id, file_id);
+        query = "UPDATE `tasks_files` SET `status` = '1' WHERE `task_id`='%d' and file_id='%d'"%(task_id, file_id);
         curs.execute(query);
 
         if DEBUG:
             print query;
+
+
+    if DEBUG:
+        print '[End File Check]';
