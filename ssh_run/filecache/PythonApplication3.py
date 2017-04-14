@@ -11,15 +11,14 @@ import sys
 import os
 import datetime
 import time
-import paramiko
 
 DEBUG = True;
 
 import operation
 import filecache
+import ssh2
 
-
-while 1:
+def start_work():
     if DEBUG:
         print "Start work...";
 
@@ -42,6 +41,8 @@ while 1:
             print "Success connect to db"
 
     curs=db.cursor();
+
+   # filecache.check_file_used(curs);
 
     query=\
     """
@@ -66,9 +67,9 @@ while 1:
     
     if DEBUG:
         print "Num results: %d task(s)"%num_tasks
+    
+    ssh = ssh2.ssh_client();
 
-    
-    
     for i in range(0, num_tasks):
         oper_id = result[i][0];
         oper_fileid = result[i][1];
@@ -76,6 +77,7 @@ while 1:
         oper_multi_id = result[i][3]
         
         error=0;
+        error_string = "";
 
         if DEBUG:
             print "Task:: '%i'"%i
@@ -115,19 +117,20 @@ while 1:
             filecache.pre_add_file_to_cache(curs, oper_fileid, oper_multi_id)
 
             try:
-                operation.transfer_file(curs, oper_fileid, file_userid, oper_multi_id, file_size);
+                operation.transfer_file(curs, ssh, oper_fileid, file_userid, oper_multi_id, file_size);
             except Exception as str:
                 print 'Error:%s'%str;
+                error_string = str;
                 error = 1;
 
-            #if error == 0:
-            #    filecache.post_add_file_to_cache(curs, oper_fileid, oper_multi_id);
+            if error == 0:
+                filecache.post_add_file_to_cache(curs, oper_fileid, oper_multi_id);
 
         if oper_type == 'copyfrom' and error==0:
             operation.lock(curs,oper_id, oper_fileid);
 
             try:
-                operation.download_file(curs, oper_fileid, file_userid, oper_multi_id, file_size);
+                operation.download_file(curs, ssh, oper_fileid, file_userid, oper_multi_id, file_size);
             except:
                 error = 1;
 
@@ -135,12 +138,14 @@ while 1:
             operation.lock(curs,oper_id, oper_fileid);
 
             try:
-                operation.delete_file(curs, oper_fileid, file_userid, oper_multi_id, file_size);
+                operation.delete_file(curs, ssh, oper_fileid, file_userid, oper_multi_id, file_size);
             except:
                 error = 1;
 
-        operation.unlock(error, curs, oper_id, oper_fileid);    
+        operation.unlock(error, error_string, curs, oper_id, oper_fileid);   
 
-
-
-    time.sleep(60);
+    ssh2.ssh_close(ssh);
+        
+while 1:
+    start_work();
+    time.sleep(60); 

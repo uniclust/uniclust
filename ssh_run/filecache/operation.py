@@ -8,10 +8,11 @@ import exceptions
 import MySQLdb
 
 import filecache
+import ssh2
 
 RUNNING_STATUS = 2;
 
-def delete_file_everywhere(curs, file_id, user_id, multi_id, file_size ):
+def delete_file_everywhere(curs, ssh, file_id, user_id, multi_id, file_size ):
     DEBUG = global_vars.DEBUG;
 
     query2 = "SELECT `multiprocessor_id` from `filecache` WHERE `file_id` =%d"%file_id
@@ -50,8 +51,9 @@ def delete_file_everywhere(curs, file_id, user_id, multi_id, file_size ):
 			    path,
                 file_id
             )
-        status = 0;
+        #status = 0;
         #status = os.string(string);
+        status = ssh2.ssh_exec(ssh, string);
 
         if DEBUG:
             print string;
@@ -66,11 +68,11 @@ def delete_file_everywhere(curs, file_id, user_id, multi_id, file_size ):
     curs.execute(query);
 # Если multi_id == -1 то удалять отовсюду
 # Иначе удалять на указанном суперкомпе(если он там есть)
-def delete_file(curs, file_id, user_id, multi_id, file_size ):
+def delete_file(curs, ssh, file_id, user_id, multi_id, file_size ):
     DEBUG = global_vars.DEBUG;
     #Надо удалять только с облака
     if multi_id == -1:
-            delete_file_everywhere(curs, file_id, user_id, multi_id, file_size );
+            delete_file_everywhere(curs, ssh, file_id, user_id, multi_id, file_size );
             return
 
     query = "SELECT `user_on_it`,`host`,`path` from `multiprocessors` where `multiprocessor_id`='%d'"%(multi_id);
@@ -93,8 +95,9 @@ def delete_file(curs, file_id, user_id, multi_id, file_size ):
 			    path,
                 file_id
             )
-    status = 0;
+    #status = 0;
     #status = os.string(string);
+    status = ssh2.ssh_exec(ssh, string);
 
     if DEBUG:
         print string;
@@ -105,7 +108,7 @@ def delete_file(curs, file_id, user_id, multi_id, file_size ):
     query = "DELETE FROM `filecache` WHERE `file_id`='%d' and `multiprocessor_id`='%d'"%(file_id, multi_id);
     curs.execute(query);
 
-def download_file(curs, file_id, user_id, multi_id, file_size ):
+def download_file(curs, ssh, file_id, user_id, multi_id, file_size ):
     query = "SELECT `user_on_it`,`host`,`path`,`files_quota` from `multiprocessors` where `multiprocessor_id`='%d'"%(multi_id);
     curs.execute(query);
     result = curs.fetchall();
@@ -128,31 +131,37 @@ def download_file(curs, file_id, user_id, multi_id, file_size ):
 		)
     print "Task upload data: '%s'"%string;
     # status = os.system(string)
-    status = 0;
+    #status = 0;
+    status = ssh2.ssh_exec(ssh, string);
 
     if status:
         raise "Scp failed"
 
-def transfer_file(curs, file_id, user_id, multi_id, file_size ):
+def transfer_file(curs, ssh, file_id, user_id, multi_id, file_size ):
     DEBUG = global_vars.DEBUG;
-    query = "SELECT `user_on_it`,`host`,`path`,`files_quota` from `multiprocessors` where `multiprocessor_id`='%d'"%(multi_id);
+    query = "SELECT `user_on_it`,`host`,`path`,`files_quota` from `multiprocessors` where `multiprocessor_id`='%d' LIMIT 1"%(multi_id);
     curs.execute(query);
+    result = curs.fetchall();
 
     curr_quota = filecache.get_files_sum(curs, multi_id);
-
-    if DEBUG:
-        print '[TransferFile] FID %d | UID %d | MID %d | SIZE %d | CURR_QOUTA %s | QUOTA %d'%(file_id, user_id, multi_id, file_size, curr_quota,quota);
-        print query;
-
-    result = curs.fetchall();
 
     user_on_mult = result[0][0];
     host = result[0][1];
     path = result[0][2];
     quota = result[0][3];
 
+    if DEBUG:
+        print '[TransferFile] FID %d | UID %d | MID %d | SIZE %d | CURR_QOUTA %s | QUOTA %s'%(file_id, user_id, multi_id, file_size, curr_quota,quota);
+        print query;
+
+    # SSH
+    try:
+        ssh2.ssh_connect(ssh,host, user_on_mult, global_vars.key_path);
+    except Exception as str:
+        print str;
+
     if quota - (file_size+curr_quota) < 0:
-        raise Exception("Error filequota")
+        filecache.delete_files(curs, ssh, multi_id, quota, file_size,0);
 
     string="scp %s/%d/%d %s@%s:%s/files/%d" %\
 			(
@@ -167,7 +176,8 @@ def transfer_file(curs, file_id, user_id, multi_id, file_size ):
 
     print "Task upload data: '%s'"%string;
     # status = os.system(string)
-    status = 0;
+    # status = 0;
+    status = ssh2.ssh_exec(ssh, string);
 
     if status:
         raise Exception("Scp failed")
@@ -199,7 +209,7 @@ def lock( curs, oper_id, file_id):
     if DEBUG:
         print "[Lock] Query#2: '%s'"%query;
 
-def unlock( type, curs, oper_id, file_id):
+def unlock( type, err_str, curs, oper_id, file_id):
     
     DEBUG = global_vars.DEBUG;
 
@@ -209,10 +219,11 @@ def unlock( type, curs, oper_id, file_id):
         update
             operations
         set
-            operations.status = 1
+            operations.status = 3,
+            operations.error_message = '%s'
         where
             operations.operation_id=%d
-    """ %(oper_id);   
+    """ %(err_str,oper_id);   
     else:
         query=\
     """

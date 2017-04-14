@@ -6,23 +6,26 @@
 # ? task_files ????? ?? ???????? ?????????? ? ????? ??????? ??????
 
 #paramiko переделать os.string()
+
 import global_vars
 import exceptions
 import MySQLdb
+import ssh2
 
-def force_delete(curs, file_id, multi_id):
+def force_delete(curs, ssh, file_id, multi_id):
+    DEBUG = global_vars.DEBUG;
     query = "SELECT `user_on_it`,`host`,`path` from `multiprocessors` where `multiprocessor_id`='%d'"%(multi_id);
     curs.execute(query);
 
     result = curs.fetchall();
-    user_on_mult = result2[0][0];
-    host = result2[0][1];
-    path = result2[0][2];
+    user_on_mult = result[0][0];
+    host = result[0][1];
+    path = result[0][2];
 
     if DEBUG:
-        print '[ForceDelete] FID %d | UID %d | MID %d | FSIZE %d '%(file_id, user_id, multi_id, file_size);
-        print query2;
-        print "[Res] UID %d | HOST %s | Path %s"%(user_on_mult, host, path);
+        print '[ForceDelete] FID %d | MID %d'%(file_id, multi_id);
+        print query;
+        #print "[Res] UID %d | HOST %s | Path %s"%(user_on_mult, host, path);
 
     string = "rm -f %s@%s:%s/files/%d" %\
             (
@@ -31,7 +34,8 @@ def force_delete(curs, file_id, multi_id):
 			    path,
                 file_id
             )
-    status = 0;
+    #status = 0;
+    status = ssh2.ssh_exec(ssh, string);
     #status = os.string(string);
     if DEBUG:
         print string;
@@ -57,7 +61,7 @@ def get_file_size(curs, file_id):
 
     return size;
 
-def delete_files(curs, multi_id, quota, file_size, sum):
+def delete_files(curs, ssh, multi_id, quota, file_size, sum):
     DEBUG = global_vars.DEBUG;
     query = "SELECT `file_id` FROM `filecache` WHERE `multiprocessor_id`='%d' ORDER BY (`read_counter` and `write_counter`) ASC"%multi_id;
     curs.execute(query);
@@ -87,13 +91,13 @@ def delete_files(curs, multi_id, quota, file_size, sum):
         
 
     if take == True:
-        for j in range(i):
+        for j in range(i+1):
             file_id = result[i][0];
 
             if DEBUG:
                 print '[Quota] Delete file %d'%file_id;
 
-            force_delete(curs, file_id, multi_id);
+            force_delete(curs, ssh, file_id, multi_id);
     else:
         raise Exception("Error on delete files on filecache");
 
@@ -105,13 +109,14 @@ def get_files_sum(curs, multi_id):
 
     curs.execute(query);
 
-   
-
     result = curs.fetchall();
     rlen = len(result);
     
     if DEBUG:
         print '[GET|Files|Sum] Query %s | Res Len %d'%(query, rlen);
+
+    if rlen == 0:
+        return 0;
 
     query2 = "";
     for i in range(rlen):
@@ -138,8 +143,8 @@ def get_files_sum(curs, multi_id):
 
 
 def pre_add_file_to_cache( curs, file_id, multi_id ):
-    query = "INSERT INTO `filecache` (`file_id`, `multiprocessor_id`, `status`, `read_counter`, `write_counter`, `last_read`, `last_write`) \
-    VALUES ('%d', '%d', 'transfer', '0', '0', '', '')"%(file_id, multi_id);
+    query = "INSERT INTO `filecache` (`file_id`, `multiprocessor_id`, `status`, `read_counter`, `write_counter`) \
+    VALUES ('%d', '%d', 'transfer', '0', '0')"%(file_id, multi_id);
     curs.execute(query);
 
 def post_add_file_to_cache( curs, file_id, multi_id ):
