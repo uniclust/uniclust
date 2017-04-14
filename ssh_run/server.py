@@ -40,6 +40,9 @@ if 'logfile' not in config:
 if 'errfile' not in config:
 	config[errfile] = '/var/log/uniclust.err'
 
+if `keyfile` not in config:
+	config[keyfile] = '/var/key.txt'
+
 # privileges
 from pwd import getpwnam
 os.setuid(getpwnam(config[user]).pw_uid)
