@@ -146,6 +146,6 @@ def start_work():
 
     ssh2.ssh_close(ssh);
         
-while 1:
-    start_work();
-    time.sleep(60); 
+#while 1:
+#    start_work();
+#    time.sleep(60); 
