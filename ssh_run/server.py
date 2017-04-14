@@ -12,7 +12,7 @@ import datetime
 import Backfill
 import time
 import fcntl
-
+import filecache/PythonApplication3
 
 flag=True
 #os.unlink(global_vars.lock_path)
@@ -138,6 +138,8 @@ while 1:
 	#	sys.exit(1)
 	#print "Сhecking server lock... OK!"
 
+	PythonApplication3.start_work();
+	
 	db_error_flag=False
 	try:
 		db=MySQLdb.connect\
