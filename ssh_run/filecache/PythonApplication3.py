@@ -6,7 +6,7 @@
 #import fcntl
 
 import MySQLdb
-import global_vars
+import global_vars2
 import sys
 import os
 import datetime
@@ -17,6 +17,7 @@ DEBUG = True;
 import operation
 import filecache
 import ssh2
+import db2
 
 def start_work():
     if DEBUG:
@@ -24,12 +25,12 @@ def start_work():
 
     db_error_flag=False
     try:
-        db=MySQLdb.connect\
+        db=db2.db_connect\
             (
-            host=global_vars.db_host,
-            user=global_vars.db_user,
-            passwd=global_vars.db_passwd,
-			db=global_vars.db_name
+            host=global_vars2.db_host,
+            user=global_vars2.db_user,
+            passwd=global_vars2.db_passwd,
+			db=global_vars2.db_name
             )
     except:
         db_error_flag = True;
@@ -40,7 +41,7 @@ def start_work():
         if DEBUG:
             print "Success connect to db"
 
-    curs=db.cursor();
+    curs=db2.db_get_cursor(db);
 
     filecache.check_file_used(curs);
 
@@ -60,9 +61,9 @@ def start_work():
     if DEBUG:
         print "Run Query: %s"% query;
 
-    curs.execute(query);
+    db2.db_execute_query(curs, query);
 
-    result = curs.fetchall();
+    result = db2.db_fetchall(curs);
     num_tasks = len(result);
     
     if DEBUG:
@@ -89,12 +90,12 @@ def start_work():
             """%(oper_id, oper_fileid, oper_type, oper_multi_id);
 
         query = "SELECT `status`, `user_id`, `size` FROM `files` WHERE `file_id`='%d' LIMIT 1"%(oper_fileid);
-        curs.execute(query);
+        db2.db_execute_query(curs, query);
 
         if DEBUG:
             print "Query::'%s'"%query;
 
-        result2 = curs.fetchall();
+        result2 = db2.db_fetchall(curs);
 
         file_status = result2[0][0];
         file_userid = result2[0][1];
@@ -146,6 +147,6 @@ def start_work():
 
     ssh2.ssh_close(ssh);
         
-#while 1:
-#    start_work();
-#    time.sleep(60); 
+while 1:
+    start_work();
+    time.sleep(60); 

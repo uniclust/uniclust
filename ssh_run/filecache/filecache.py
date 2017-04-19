@@ -7,17 +7,19 @@
 
 #paramiko переделать os.string()
 
-import global_vars
+import global_vars2
 import exceptions
 import MySQLdb
 import ssh2
 
-def force_delete(curs, ssh, file_id, multi_id):
-    DEBUG = global_vars.DEBUG;
-    query = "SELECT `user_on_it`,`host`,`path` from `multiprocessors` where `multiprocessor_id`='%d'"%(multi_id);
-    curs.execute(query);
+import db2
 
-    result = curs.fetchall();
+def force_delete(curs, ssh, file_id, multi_id):
+    DEBUG = global_vars2.DEBUG;
+    query = "SELECT `user_on_it`,`host`,`path` from `multiprocessors` where `multiprocessor_id`='%d'"%(multi_id);
+    db2.db_execute_query(curs, query);
+
+    result = db2.db_fetchall(curs);
     user_on_mult = result[0][0];
     host = result[0][1];
     path = result[0][2];
@@ -45,15 +47,15 @@ def force_delete(curs, ssh, file_id, multi_id):
 
     # еще нужно удалить из filecache
     query = "DELETE FROM `filecache` WHERE `file_id`='%d' and `multiprocessor_id`='%d'"%(file_id, multi_id);
-    curs.execute(query);
+    db2.db_execute_query(curs, query);
 
 def get_file_size(curs, file_id):
-    DEBUG = global_vars.DEBUG;
+    DEBUG = global_vars2.DEBUG;
 
     query = "SELECT size FROM files where `file_id`='%d'"%file_id;
-    curs.execute(query);
+    db2.db_execute_query(curs, query);
 
-    result = curs.fetchall();
+    result = db2.db_fetchall(curs);
     size = result[0][0];
 
     if DEBUG:
@@ -62,11 +64,11 @@ def get_file_size(curs, file_id):
     return size;
 
 def delete_files(curs, ssh, multi_id, quota, file_size, sum):
-    DEBUG = global_vars.DEBUG;
+    DEBUG = global_vars2.DEBUG;
     query = "SELECT `file_id` FROM `filecache` WHERE `multiprocessor_id`='%d' ORDER BY (`read_counter` and `write_counter`) ASC"%multi_id;
-    curs.execute(query);
+    db2.db_execute_query(curs, query);
 
-    result = curs.fetchall();
+    result = db2.db_fetchall(curs);
     rlen = len(result);
 
     snum = 0;
@@ -104,12 +106,12 @@ def delete_files(curs, ssh, multi_id, quota, file_size, sum):
 
 
 def get_files_sum(curs, multi_id):
-    DEBUG = global_vars.DEBUG;
+    DEBUG = global_vars2.DEBUG;
     query = "SELECT file_id FROM `filecache` WHERE `status` = 'OK' and `multiprocessor_id`='%d'"%multi_id;
 
-    curs.execute(query);
+    db2.db_execute_query(curs, query);
 
-    result = curs.fetchall();
+    result = db2.db_fetchall(curs);
     rlen = len(result);
     
     if DEBUG:
@@ -133,8 +135,8 @@ def get_files_sum(curs, multi_id):
     if DEBUG:
         print query;
 
-    curs.execute(query);
-    result = curs.fetchall();
+    db2.db_execute_query(curs, query);
+    result = db2.db_fetchall(curs);
 
     if DEBUG:
         print '[GET|Files|Sum] End';
@@ -145,18 +147,18 @@ def get_files_sum(curs, multi_id):
 def pre_add_file_to_cache( curs, file_id, multi_id ):
     query = "INSERT INTO `filecache` (`file_id`, `multiprocessor_id`, `status`, `read_counter`, `write_counter`) \
     VALUES ('%d', '%d', 'transfer', '0', '0')"%(file_id, multi_id);
-    curs.execute(query);
+    db2.db_execute_query(curs, query);
 
 def post_add_file_to_cache( curs, file_id, multi_id ):
     query = "UPDATE `filecache` SET `status` = 'OK' WHERE `file_id`='%d' AND `multiprocessor_id`='%d'"%(file_id, multi_id);
-    curs.execute(query);
+    db2.db_execute_query(curs, query);
 
 def get_multi_id_btid(curs, task_id ):
-    DEBUG = global_vars.DEBUG;
+    DEBUG = global_vars2.DEBUG;
     query = "SELECT `multiprocessor_id` from `tasks` where `task_id` = '%d'"%task_id;
-    curs.execute(query);
+    db2.db_execute_query(curs, query);
 
-    result = curs.fetchall();
+    result = db2.db_fetchall(curs);
     multi_id = result[0][0];
 
     if DEBUG:
@@ -165,11 +167,11 @@ def get_multi_id_btid(curs, task_id ):
     return multi_id;
 
 def check_file_used(curs):
-    DEBUG = global_vars.DEBUG;
+    DEBUG = global_vars2.DEBUG;
     query = "SELECT `task_id`, `file_id`, `access_mode` FROM `tasks_files` where `status` = '0'";
-    curs.execute(query);
+    db2.db_execute_query(curs, query);
 
-    result = curs.fetchall();
+    result = db2.db_fetchall(curs);
     rlen = len(result);
 
     if DEBUG:
@@ -191,14 +193,14 @@ def check_file_used(curs):
         else:
             query = "update `filecache` SET `read_counter` = `read_counter`+1,`write_counter` = `write_counter`+1  where `file_id`='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
 
-        curs.execute(query);
+        db2.db_execute_query(curs, query);
 
 
         if DEBUG:
             print query;
 
         query = "UPDATE `tasks_files` SET `status` = '1' WHERE `task_id`='%d' and file_id='%d'"%(task_id, file_id);
-        curs.execute(query);
+        db2.db_execute_query(curs, query);
 
         if DEBUG:
             print query;
