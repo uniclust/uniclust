@@ -3,7 +3,7 @@ function adminpage_uniclust_callback(&$form = NULL, &$form_state = NULL)
 {
 	$current_user = getFullUniclustUserInfo();
 	if($current_user['id']==0 || $current_user['id_rights'] != 1 || !CheckDrupalEntityKey()) drupal_access_denied();//drupal_not_found();
-	$page['static_content'] = array('#markup'=>'<p>Здравствуйте, Администратор UNICLUST!</p>');
+	$page['static_content'] = array('#markup'=>'<p>Здравствуйте, Администратор группы UNICLUST!</p>');
 	$page['reg_new_user_form'] = drupal_get_form('registrate_new_uniclust_user_form');
 	$page['exit_form'] = drupal_get_form('unbind_account_form');
 	

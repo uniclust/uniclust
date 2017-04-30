@@ -130,10 +130,10 @@ CREATE PROCEDURE `isThereSuchKeyOfDrupalEntity` (IN unique_key VARCHAR(100))
 BEGIN
 DECLARE is_there_such_key INT;
 SELECT COUNT(drupal_entities.drupal_entities_id) INTO is_there_such_key FROM drupal_entities WHERE drupal_entities.key = unique_key;
-    IF is_there_such_key > 0 THEN
-    	SELECT 'YES';
+    IF is_there_such_key = 1 THEN
+    	SELECT 'YES' AS 'Answer', drupal_entities.drupal_entities_id FROM drupal_entities WHERE drupal_entities.key = unique_key;
     ELSE
-    	SELECT 'NO';
+    	SELECT 'NO' AS 'Answer';
     END IF;
 END//
 
