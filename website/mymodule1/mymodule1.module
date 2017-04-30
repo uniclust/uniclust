@@ -63,49 +63,6 @@ function mymodule1_menu()
 	return $items;
 }
 
-/*функция для проверки, залогинен ли уже данный пользователь
-*возвращает ассоциативный массив, где :
-*access = true/false - залогинен ли данный пользователь Drupal'а в UNICLUST
-*uniclust_rights_id - айдишник прав данного пользователя в таблице rights Юникласта (Если не залогинен, то вернёт ноль).
-*/
-function check_is_Drupal_user_logged_in()
-{
-	global $user;
-	//сначала проверяем, есть ли в таблице модуля (которая в БД друпала) запись с айдишником текущего пользователя друпал
-	$nodes = db_select('uniclust_drupal_user_bindings', 'DB')
-	->fields('DB',array('uniclust_drupal_user_bundings_id','uniclust_key'))
-	->condition('DB.drupal_uid', $user->uid)
-	->execute();
-	$result = $nodes->rowCount();
-	if($result!=1) return FALSE;
-	$uniclust_key_of_current_drupal_user = $nodes->fetchAssoc()['uniclust_key'];
-	//если есть, то дальше смотрим, совпадают ли ключи в юникласте и той записи, которую получили выше из таблицы модуля в БД друпала
-	$link = get_db_connection();
-	$query ="SELECT COUNT(uniclust_users_id) AS 'Count' FROM uniclust_users WHERE uniclust_users.key = '".$uniclust_key_of_current_drupal_user."'";
-	$result = mysqli_query($link, $query) or die("Ошибка выполнения запроса" . mysqli_error($link));
-	$binded['access'] = false;
-	$binded['uniclust_rights_id'] = 0;
-	if($result)
-	{
-		$row = mysqli_fetch_array($result);
-		if($row['Count'] == 1)
-		{
-			$binded['access'] = true;
-			$query ="SELECT id_rights AS 'Rights' FROM uniclust_users WHERE uniclust_users.key = '".$uniclust_key_of_current_drupal_user."'";
-			$result = mysqli_query($link, $query) or die("Ошибка выполнения запроса" . mysqli_error($link));
-			$row = mysqli_fetch_array($result);
-			$binded['uniclust_rights_id'] = $row['Rights'];
-		}
-		else if($row['Count'] == 0)
-		{
-			$binded['access'] = false;
-		}
-	}
-	mysqli_close($link);
-	return $binded;
-}
-
-
 function uniclust_redirect_to_authorize()
 {
 	header("Location: ".url('uniclust',array('absolute'=>true)));
@@ -149,6 +106,7 @@ function get_db_connection()
 }
 
 //Функция, возвращающая пароль, хэшированный определённым в начале способом
+//Это необходимо будет перенести на функционал БД. Здесь об этом знать не должны
 function get_password_hash($password)
 {
 	//1 - хэшируем $password,
@@ -157,23 +115,46 @@ function get_password_hash($password)
 	return md5($password[0].md5($password).$password[drupal_strlen($password)-1]);
 }
 
+
+//Функция
 //вся информация о пользователе UNICLUST
-//если текущего пользователя нет, то account['id']=0
+//если текущего пользователя нет, то account['id']=0, в $account['why'] возможно лежит сообщение с причиной
 function getFullUniclustUserInfo()
 {
+	//что нужно для того, чтобы получить информацию пользователя Uniclust, под которым сейчас находится человек:
+	//1. смотрим, есть ли привязка в таблице uniclust_drupal_user_bindings в БД сущности Друпал (вообще, имеется ли такая запись)
+	//2. смотрим, совпадают ли ключи, которые в БД друпала и в БД Юникласта по привязке аккаунта (проверяется в SQL-запросе)
+	//3. смотрим, совпадают ли ключ айди данной сущности друпала (checkDrupalEntityKey) и айди сущности друпала,
+	//к которой относится пользователь в таблице всех пользователей uniclust'a (тоже проверяется в SQL-запросе в условии WHERE)
+	
+	//Пункт 1
 	$account['id'] = 0;
 	global $user;
 	//сначала проверяем, есть ли в таблице модуля (которая в БД друпала) запись с айдишником текущего пользователя друпал
+	//т.е. связан ли этот аккаунт Друпал с каким-то аккаунтом Юникласт
 	$nodes = db_select('uniclust_drupal_user_bindings', 'DB')
-	->fields('DB',array('uniclust_drupal_user_bundings_id','uniclust_key'))
-	->condition('DB.drupal_uid', $user->uid)
-	->execute();
+	  ->fields('DB',array('uniclust_drupal_user_bundings_id','uniclust_key'))
+	  ->condition('DB.drupal_uid', $user->uid)
+	  ->execute();
 	$result = $nodes->rowCount();
-	if($result!=1) return $account;
+	if($result!=1) 
+	{
+		$account['why'] = 'No binding';
+		return $account;
+	}
 	$uniclust_key_of_current_drupal_user = $nodes->fetchAssoc()['uniclust_key'];
-	//если есть, то дальше смотрим, совпадают ли ключи в юникласте и той записи, которую получили выше из таблицы модуля в БД друпала
+	
+	//Пункт 3
+	$entity_answer = checkDrupalEntityKey();
+	if($entity_answer == NULL)
+	{
+		$account['why'] = 'Wrong drupal entity key';
+		return $account;
+	}
+	
+	//Пункт 2 + Пункт 3
 	$link = get_db_connection();
-	$query ="SELECT COUNT(uniclust_users_id) AS 'Count' FROM uniclust_users WHERE uniclust_users.key = '".$uniclust_key_of_current_drupal_user."'";
+	$query ="SELECT COUNT(uniclust_users_id) AS 'Count' FROM uniclust_users WHERE uniclust_users.key = '".$uniclust_key_of_current_drupal_user."' AND uniclust_users.id_drupal_entities = ".$entity_answer['id_drupal_entity'];
 	$result = mysqli_query($link, $query) or die("Ошибка выполнения запроса" . mysqli_error($link));
 	if($result)
 	{
@@ -191,7 +172,7 @@ function getFullUniclustUserInfo()
 			$account['date_of_registration'] = $row['date_of_registration'];
 			$account['id_rights'] = $row['id_rights'];
 			$account['key'] = $row['key'];
-			$account['id_drupal_entity_key'] = $row['id_drupal_entities'];
+			$account['id_drupal_entity'] = $row['id_drupal_entities'];
 		}
 		else if($row['Count'] == 0)
 		{
@@ -202,24 +183,29 @@ function getFullUniclustUserInfo()
 	return $account;
 }
 
-//функция для проверки ключа сущности Drupal. Вернёт ключ этой сущности, если ключ сущности друпала есть в юникласте и NULL - если нет.
-function CheckDrupalEntityKey()
+//Функция для проверки ключа сущности Drupal. Вернёт ключ этой (текущей) сущности, если ключ сущности друпала есть в юникласте и NULL - если нет.
+function checkDrupalEntityKey()
 {
-	//достаём ключ из бд Drupal'a
+	$answer = NULL;
+	//Достаём ключ из бд Drupal'a
 	$nodes = db_select('drupal_key_for_uniclust','DB') -> fields('DB', array('unique_key')) -> execute();
 	if($nodes -> rowCount() != 1) return NULL;
 	$key = $nodes -> fetchAssoc()['unique_key'];
-	//подключаемся к юникласту и вызываем процедуру, которая нам отвечает, есть такой ключ, или нет
+	//Подключаемся к юникласту и вызываем процедуру, которая нам отвечает, есть такой ключ, или нет
 	$link = get_db_connection();
 	$query = "CALL `isThereSuchKeyOfDrupalEntity`('".$key."')";
 	$result = mysqli_query($link, $query);
-	if($result && mysqli_fetch_array($result)['Answer'] == 'YES')
+	if($result)
 	{
-		mysqli_close($link);
-		return $key;
+		$row = mysqli_fetch_array($result);
+		if($row['Answer'] == 'YES')
+		{
+			$answer['entity_key'] = $key;
+			$answer['id_drupal_entity'] = $row['drupal_entities_id'];
+		}
 	}
 	mysqli_close($link);
-	return NULL;
+	return $answer;
 }
 
 

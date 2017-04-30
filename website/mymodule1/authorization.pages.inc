@@ -44,27 +44,48 @@ function authorization_form_validate($form, &$form_state)
 
 function authorization_form_submit($form, &$form_state) 
 {
+	//Выберем ключ пользователя Uniclust и айди сущности Друпала по введённым данным в поля(логин\мыло и пароль)
+	//1. Если такого нет, то данные введены неверно!
+	//2. Если такой есть: Сравниваем ключ привязки: выбираем айди пользователя Друпал из таблицы привязок аккаунтов с ключом, который мы получили из найденного аккаунта Uniclust
+	//2.1. Такого айди нет, следовательно введённый аакаунт Uniclust не привязан ни к одной учётке данной сущности Друпала. Посмотрим, возможно этот аккаунт Друпал привязан к другому аккаунту Uniclust (делаем выборку из таблицы привязки аккаунтов по айди текущего пользователя Друпал)
+	//2.2. Такой айди есть(см. пункт 2.2. ниже)
+	//2.1.1 Текущий аккаунт Друпал уже привязан к какой учётной записи Uniclust и, по-идее, при таких обстоятельствах, пользователь сразу переадресовывается с данный страницы в рабочую среду Uniclust, но если этого не произошло, то мы выдаём ошибку о том, что данный аккаунт Друпал уже привязан к какой-то учётке Uniclust.
+	//2.1.2 Текущий аккаунт Друпал не привязан ни к какой учётке Uniclust, проверим ключ сущности Друпала на правильность
+	//2.1.2.1 Ключ сущности неверный! Выводим ошибку
+	//2.1.2.2 Ключ сущности верный - проверяем, к какой сущности Друпала принадлежит введённый пользователь Uniclust(выбираем айди сущности Друпала из таблицы drupal_entities из БД Uniclust по ключу и айди сущности Друпала(который мы откопали у пользователя), который указан в конфигурациях данного модуля)
+	//2.1.2.2.1 Введённый пользователь Uniclust принадлежит именно этой сущности - заносим привязку в таблицу привязок БД Друпала, всё хорошо!!!!!
+	//2.1.2.2.2 Введённый пользователь Uniclust принадлежит сущности Друпал с другим ключом - выдаём ошибку
+	//2.2. В таблице привязок аккаунтов есть такая запись, у которой ключ совпадает с тем, что мы выбрали из БД Uniclust. Сверим айди текущего пользователя Друпал и тот, что мы получили из таблицы привязок
+	//2.2.1. Эти два айди совпадают, проверяем ключ сущности Друпала на правильность (checkDrupalEntityKey)
+	//2.2.2. Эти два айди не совпадают, следовательно, под введённым аккаунтом Uniclust работает другой пользователь Друпал. Выдаём ошибку.
+	//2.2.1.1 Ключ сущности Друпал указан неверно - выводим ошибку
+	//2.2.1.1 Ключ сущности Друпал указан верно. Теперь проверяем, принадлежит ли введённый пользователь Uniclust именно этой сущности Drupal, или другой
+	//2.2.1.1.1 Введённый пользователь Uniclust указан верно, но он принадлежит другой сущности Drupal - выводим ошибку!
+	//2.2.1.1.2 Введённый пользователь Uniclust введён верно, всё хорошо!!!!!
 	global $user;
 	$link = get_db_connection();
 	$hash = get_password_hash($form_state['values']['password']);
-	//выберем уникальный ключ пользователя по введённому логину\почте и паролю
-	$query ="SELECT uniclust_users.key, uniclust_users.id_drupal_entities FROM uniclust_users WHERE (uniclust_users.login = '".$form_state['values']['login_or_email']."' OR uniclust_users.email = '".$form_state['values']['login_or_email']."') AND uniclust_users.password = '".$hash."'";
-	$result = mysqli_query($link, $query) or die("Ошибка выполнения запроса" . mysqli_error($link)); 
+	//выберем уникальный ключ пользователя Юникласт из БД Юникласт по введённому логину\почте и паролю
+	$query = "SELECT uniclust_users.key, uniclust_users.id_drupal_entities FROM uniclust_users WHERE (uniclust_users.login = '".$form_state['values']['login_or_email']."' OR uniclust_users.email = '".$form_state['values']['login_or_email']."') AND uniclust_users.password = '".$hash."'";
+	$result = mysqli_query($link, $query);// or die("Ошибка выполнения запроса" . mysqli_error($link)); 
 	if($result)
 	{
-		$row = mysqli_fetch_array($result);
-		$key_uniclust = $row['key'];
-		$user_drupal_entity_id = $row['id_drupal_entities'];//какой сущности друпала принадлежит этот пользователь? потом будем сравнивать!
+		
 		$row_cnt = mysqli_num_rows($result);
-		//Учётка UNICLUST с таким логином\email'ом и паролем отсутствует в базе данных UNICLUST, либо таких учёток много
+		//учётка UNICLUST с таким логином\email'ом и паролем отсутствует в базе данных UNICLUST, либо таких учёток много (чего быть не может).
 		if($row_cnt != 1)
 		{
 			form_set_error('login_or_email','Данные введены неверно! Повторите попытку.');
 			return;
 		}
-		//Данные верны и такая учётка UNICLUST правда существует
+		//Данные введены верно и такая учётка UNICLUST правда существует
 		else
 		{
+			$row = mysqli_fetch_array($result);
+			$key_uniclust = $row['key'];//ключ пользователя Uniclust, от которого введены данные
+			$user_drupal_entity_id = $row['id_drupal_entities'];//какой сущности друпала принадлежит этот пользователь? потом будем сравнивать!
+			
+			//выбираем айди пользователя Друпала из таблицы uniclust_drupal_user_bindings по ключу аккаунта Uniclust, от которого введены данные
 			$nodes = db_select('uniclust_drupal_user_bindings', 'DB')
 			->fields('DB',array('drupal_uid'))
 			->condition('DB.uniclust_key', $key_uniclust)
@@ -76,31 +97,17 @@ function authorization_form_submit($form, &$form_state)
 				//Если айдишники совпали, то всё огонь
 				if($user->uid == $nodes->fetchAssoc()['drupal_uid'])
 				{
-					//ВСЁ ВЕРНО! Осталось сравнить ключи сущностей друпала, которому принадлежит данный пользователь и сущности друпала, из под которой этот пользователь пытается сейчас войти в аккаунт
-					//вытягиваем уникальный ключ из этой сущности друпала
-					$nodes = db_select('drupal_key_for_uniclust', 'DB')
-					->fields('DB',array('unique_key'))
-					->execute();
-					if($nodes->rowCount()!=1)
+					//проверяем ключ сущности Друпал на правильность
+					$entity_answer = checkDrupalEntityKey();
+					if($entity_answer == NULL)
 					{
-						form_set_error('login_or_email','Данная сущность Drupal не содержит уникального ключа для идентификации в UNICLUST. Если проблема повторяется - обратитесь к администратору данной сущности Drupal.');
+						form_set_error('login_or_email','Данная сущность Drupal содержит неверный ключ сущности. Если проблема повторяется - обратитесь к администратору данной сущности Drupal.');
 						return;
 					}
-					$unique_key_of_current_drupal_entity = $nodes->fetchAssoc()['unique_key'];
-					//Вытянем из БД Юникласта ключ сущности друпала, которой принадлежит данный пользователь и сравним этот ключ с ключом, который выше
-					$link = get_db_connection();
-					$query = "SELECT * FROM drupal_entities WHERE (drupal_entities.key = '".$unique_key_of_current_drupal_entity."' AND drupal_entities.drupal_entities_id = ".$user_drupal_entity_id." )";
-					$result = mysqli_query($link, $query) or die("Ошибка выполнения запроса " . mysqli_error($link)); 
-					$rowCount = mysqli_num_rows($result);
-					mysqli_close($link);
-					if($result && $rowCount == 1)
+					//Теперь проверим, введённый пользователь Uniclust, принадлежит ли он именно этой сущности друпал
+					if($entity_answer['id_drupal_entity'] != $user_drupal_entity_id)
 					{
-						//ВСЁ ВЕРНО: логин\эмейл и пароль - правильные, ключ сопоставления пользователей между друпалом и юникластом - правильные, уникальный ключ сущности друпала - правильный
-						return;
-					}
-					else
-					{
-						form_set_error('login_or_email','Извините, но данная учётная запись принадлежит другой сущности Drupal. Вы не можете в неё войти отсюда.');
+						form_set_error('login_or_email','Указанный пользователь Uniclust принадлежит другой сущности Drupal. Если проблема повторяется - обратитесь к администратору данной сущности Drupal.');
 						return;
 					}
 				}
@@ -124,7 +131,7 @@ function authorization_form_submit($form, &$form_state)
 				if($row_cnt!=1)
 				{
 					//Теперь проверим, эта учётка вообще из этой сущности друпала, или из другой?
-					$key = CheckDrupalEntityKey();
+					$key = checkDrupalEntityKey();
 					if(!$key)
 					{
 						form_set_error('login', 'В вашей сущности Drupal используется неккоректный ключ. Введите корректный ключ в настройках модуля UNICLUST и повторите попытку.');
@@ -133,11 +140,10 @@ function authorization_form_submit($form, &$form_state)
 					
 					//Вытянем из БД Юникласта ключ сущности друпала, которой принадлежит данный пользователь и сравним этот ключ с ключом, который выше
 					$link = get_db_connection();
-					$query = "SELECT * FROM drupal_entities WHERE (drupal_entities.key = '".$key."' AND drupal_entities.drupal_entities_id = ".$user_drupal_entity_id." )";
+					$query = "SELECT * FROM drupal_entities WHERE (drupal_entities.key = '".$key['entity_key']."' AND drupal_entities.drupal_entities_id = ".$user_drupal_entity_id." )";
 					$result = mysqli_query($link, $query);// or die("Ошибка выполнения запроса " . mysqli_error($link)); 
-					$rowCount = mysqli_num_rows($result);
 					mysqli_close($link);
-					if($result && $rowCount == 1)
+					if($result && mysqli_num_rows($result) == 1)
 					{
 						//ВСЁ ВЕРНО: логин\эмейл и пароль - правильные, ключ сопоставления пользователей между друпалом и юникластом - его нет вовсе,т.к. этот аккаунт юникласт пока свободен, уникальный ключ сущности друпала - правильный
 						db_insert('uniclust_drupal_user_bindings')

@@ -3,18 +3,16 @@
 function account_uniclust_callback($form = NULL, &$form_state = NULL) {
 	$uniclust_user = getFullUniclustUserInfo();
 	if($uniclust_user['id']==0) header("Location:".url('uniclust/',array('absolute'=>true)));
-	if(check_is_Drupal_user_logged_in()['uniclust_rights_id'] == 1)
+	if($uniclust_user['id_rights'] == 1)
 	{
 		$page['admin_panel_link'] = array('#markup' => '<a href="'.url('uniclust/admin',array('absolute'=>true)).'">Перейти в Панель администратора</a><br>');
 	}
 	$page['account_info'] = array('#markup' => 'Здравствуйте, '.$uniclust_user['full_user_name'].'!<br />Ваш логин: '.$uniclust_user['login'].'<br />Ваш e-mail: '.$uniclust_user['email'].'<br />Ваш аккаунт зарегистрирован: '.$uniclust_user['date_of_registration'].'<br />');
 	$page['change_password_header'] = array('#markup' =>'<br /><h2>Смена пароля</h2><br />');
 	$page['change_password_form'] = drupal_get_form('change_password_form');
-	//file_put_contents('alya.txt', implode(', ', $page));
 	
 	$page['change_password_form']['new_password']['pass1']['#title'] = 'Новый пароль';
 	$page['change_password_form']['new_password']['pass2']['#title'] = 'Повторите новый пароль';
-	//print_r($page);
 	return $page;
 }
 
