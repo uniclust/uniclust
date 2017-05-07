@@ -15,3 +15,6 @@ def db_execute_query( curs, query ):
 
 def db_fetchall( curs ):
     return curs.fetchall();
+
+def db_escape_string( db ):
+    return db.escape_string("'");

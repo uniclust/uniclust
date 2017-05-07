@@ -1,16 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*
 
-# ? ??????? filecache ???? Operation id, ??????
-# ? task_files ???????? multi_id, id
-# ? task_files ????? ?? ???????? ?????????? ? ????? ??????? ??????
-
-#paramiko переделать os.string()
-
 import global_vars2
 import exceptions
 import MySQLdb
 import ssh2
+import datetime
 
 import db2
 
@@ -27,23 +22,20 @@ def force_delete(curs, ssh, file_id, multi_id):
     if DEBUG:
         print '[ForceDelete] FID %d | MID %d'%(file_id, multi_id);
         print query;
-        #print "[Res] UID %d | HOST %s | Path %s"%(user_on_mult, host, path);
+        print "[Res] UID %s | HOST %s | Path %s"%(user_on_mult, host, path);
 
-    string = "rm -f %s@%s:%s/files/%d" %\
-            (
-                user_on_mult,
-			    host,
-			    path,
-                file_id
-            )
-    #status = 0;
-    status = ssh2.ssh_exec(ssh, string);
-    #status = os.string(string);
+    str_delete = "%s/files/%d"%(path,
+                file_id);
+    # SSH
+    if global_vars2.SSH == True:
+        ssh2.ssh_connect(ssh,host, user_on_mult, global_vars2.key_path);
+        sftp = ssh2.sftp_ini(ssh);
+        ssh2.sftp_delete(sftp, str_delete);
+        ssh2.sftp_close(sftp);
+        ssh2.ssh_close(ssh);
+
     if DEBUG:
-        print string;
-
-    if status:
-        raise "ForceRm failed(MultiID:%d)"%multi_id;
+        print '[ForceDelete] "%s" END'%str_delete;
 
     # еще нужно удалить из filecache
     query = "DELETE FROM `filecache` WHERE `file_id`='%d' and `multiprocessor_id`='%d'"%(file_id, multi_id);
@@ -65,7 +57,7 @@ def get_file_size(curs, file_id):
 
 def delete_files(curs, ssh, multi_id, quota, file_size, sum):
     DEBUG = global_vars2.DEBUG;
-    query = "SELECT `file_id` FROM `filecache` WHERE `multiprocessor_id`='%d' ORDER BY (`read_counter` and `write_counter`) ASC"%multi_id;
+    query = "SELECT `file_id` FROM `filecache` WHERE `multiprocessor_id`='%d' and `status`='OK' ORDER BY (`read_counter` and `write_counter`) ASC"%multi_id;
     db2.db_execute_query(curs, query);
 
     result = db2.db_fetchall(curs);
@@ -78,7 +70,6 @@ def delete_files(curs, ssh, multi_id, quota, file_size, sum):
 
     if DEBUG:
         print '[QuotaClear] query [%s] | Len %d | quota %d | Fsize %d | sum %d'%(query, rlen, quota, file_size, sum);
-
     for i in range(rlen):
         file_id = result[i][0];
 
@@ -175,8 +166,10 @@ def check_file_used(curs):
     rlen = len(result);
 
     if DEBUG:
+        print '[Start] Check file used';
         print '[CheckFileUsed] Query [%s] | Result len %d'%(query, rlen);
 
+    mytime = datetime.datetime.now();
 
     for i in range(rlen):
         task_id = result[i][0];
@@ -187,11 +180,11 @@ def check_file_used(curs):
         multi_id = get_multi_id_btid(curs, task_id);
 
         if access_mode == 'r':
-            query = "update `filecache` SET `read_counter` = `read_counter`+1 where `file_id`='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
+            query = "update `filecache` SET `read_counter` = `read_counter`+1,`last_read`='%s' where `file_id`='%d' and multiprocessor_id='%s'"%(mytime,file_id, multi_id);
         elif access_mode == 'w':
-            query = "update `filecache` SET `write_counter` = `write_counter`+1 where `file_id`='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
+            query = "update `filecache` SET `write_counter` = `write_counter`+1,`last_write`='%s' where `file_id`='%d' and multiprocessor_id='%s'"%(mytime, file_id, multi_id);
         else:
-            query = "update `filecache` SET `read_counter` = `read_counter`+1,`write_counter` = `write_counter`+1  where `file_id`='%d' and multiprocessor_id='%s'"%(file_id, multi_id);
+            query = "update `filecache` SET `read_counter` = `read_counter`+1,`write_counter` = `write_counter`+1, `last_read`='%s', `last_write`='%s'  where `file_id`='%d' and multiprocessor_id='%s'"%(mytime,mytime,file_id, multi_id);
 
         db2.db_execute_query(curs, query);
 
@@ -204,7 +197,5 @@ def check_file_used(curs):
 
         if DEBUG:
             print query;
-
-
     if DEBUG:
         print '[End File Check]';

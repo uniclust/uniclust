@@ -12,7 +12,9 @@ db_passwd="Dd3051540"
 #key_path  = server.config[keyfile];
 key_path= "";
 #data_path = global_vars.data_path;
-data_path= "";
+data_path= "D:/SSH";
 
 DEBUG = True;
-SSH = False;
+SSH = True;
+
+TEST_FILES = True;

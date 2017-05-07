@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-
-
 import MySQLdb
 import global_vars
 import task
@@ -13,6 +11,7 @@ import Backfill
 import time
 import fcntl
 import filecache/PythonApplication3
+import filecache/db2
 
 flag=True
 #os.unlink(global_vars.lock_path)
@@ -142,8 +141,7 @@ while 1:
 	
 	db_error_flag=False
 	try:
-		db=MySQLdb.connect\
-		(
+		db = db2.db_connect(\
 			user=global_vars.db_user,
 			host=global_vars.db_host,
 			db=global_vars.db_name,
@@ -167,7 +165,8 @@ while 1:
 	#f.close()
 
 
-	curs=db.cursor()
+	curs=db2.db_get_cursor(db)
+	
 
 	current_date=datetime.date.today()
 	delta_time=datetime.timedelta(hours=24)
@@ -182,7 +181,8 @@ while 1:
 
 
 	query="delete from hash where date_label < '%s'" %expire_date
-	curs.execute(query)
+	db2.db_execute_query(curs, query);
+	
 
 	query=\
 	"""
@@ -212,8 +212,8 @@ while 1:
 			(tasks.user_id=users.user_id)
 	"""
 
-	curs.execute(query)
-	result=curs.fetchall()
+	db2.db_execute_query(curs, query);
+	result=db2.db_fetchall(curs)
 	num_tasks=len(result)
 	#if num_tasks>0:
 	#	print "Processing %d tasks..." %num_tasks
@@ -242,12 +242,12 @@ while 1:
 			where
 				task_id=%d
 		""" %tsk.task_id
-		curs.execute(query)
+		db2.db_execute_query(curs, query);
 		
 		#
 		# if BLAST was used, define ending elements of the Task object
 		#
-		tsk.init_blast_task(curs.fetchall())
+		tsk.init_blast_task(db2.db_fetchall(curs))
 		
 		
 		#
@@ -262,16 +262,16 @@ while 1:
 			except:
 				print "    Upload data for task %d failed!" %tsk.task_id
 				query="update tasks set task_status='stopped', priority_max=1005 where task_id=%d" %tsk.task_id
-				curs.execute(query)
+				db2.db_execute_query(curs, query);
 				continue
 			status=tsk.run()
 			if status:
 				print "    Run task %d failed!" %tsk.task_id
 				query="update tasks set task_status='stopped', priority_max=1010 where task_id=%d" %tsk.task_id
-				curs.execute(query)
+				db2.db_execute_query(curs, query);
 				continue
 			query="update tasks set task_status='submitted', running_time=NOW() where task_id=%d" %tsk.task_id
-			curs.execute(query)
+			db2.db_execute_query(curs, query);
 
 		#
 		#
@@ -285,7 +285,7 @@ while 1:
 				print "    Download data failed!"
 			tsk.remote_task_delete()
 			query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
-			curs.execute(query)
+			db2.db_execute_query(curs, query);
 			tsk.email_notify_on_finish("refused")
 
 		#
@@ -302,7 +302,7 @@ while 1:
 				tsk.download_data()
 				tsk.remote_task_delete()
 				query="update tasks set task_status='finished',date_of_finishing=CURRENT_DATE where task_id=%d" %tsk.task_id
-				curs.execute(query)
+				db2.db_execute_query(curs, query);
 				tsk.email_notify_on_finish("success")
 				continue
 				
@@ -320,7 +320,7 @@ while 1:
 				print "    TASK ERROR!!"
 			
 			query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
-			curs.execute(query)
+			db2.db_execute_query(curs, query);
 			tsk.email_notify_on_finish("refused")
 
 
@@ -336,8 +336,8 @@ while 1:
 		where
 			multiprocessors.queue_alg = "mpfpfs"
 	"""
-	curs.execute(query)
-	resultM=curs.fetchall()
+	db2.db_execute_query(curs, query);
+	resultM=db2.db_fetchall(curs)
 	num_multiprocessors=len(resultM)
 	#print "%d multiprocessor(s) use(s) algorithm 'mpfpfs':" %num_multiprocessors
 	rt = datetime.datetime.today()
@@ -389,8 +389,8 @@ while 1:
 				(multiprocessors.multiprocessor_id = %d) and 
 				(tasks.user_id=users.user_id)
 		"""%mult_id
-		curs.execute(query)
-		result_q1=curs.fetchall()
+		db2.db_execute_query(curs, query);
+		result_q1=db2.db_fetchall(curs)
 		num_tasks_q1=len(result_q1)
 		
 		query=\
@@ -423,8 +423,8 @@ while 1:
 				(multiprocessors.multiprocessor_id = %d) and 
 				(tasks.user_id=users.user_id)
 		"""%mult_id
-		curs.execute(query)
-		result_q2=curs.fetchall()
+		db2.db_execute_query(curs, query);
+		result_q2=db2.db_fetchall(curs)
 		num_tasks_q2=len(result_q2)
 		
 		#print "\tnumber of not queued tasks on multiproc with ID %d is %d" %(mult_id, num_tasks_q1)
@@ -461,8 +461,8 @@ while 1:
 				(multiprocessors.multiprocessor_id = %d) and 
 				(tasks.user_id=users.user_id)
 		"""%mult_id
-		curs.execute(query)
-		result_q3=curs.fetchall()
+		db2.db_execute_query(curs, query);
+		result_q3=db2.db_fetchall(curs)
 		
 		#delete broken tasks
 		for i in range(0, len(result_q3)):
@@ -473,7 +473,7 @@ while 1:
 				print "    Download data failed!"
 			tsk.remote_task_delete()
 			query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
-			curs.execute(query)
+			db2.db_execute_query(curs, query);
 			tsk.email_notify_on_finish("refused")
 		
 		if (num_tasks_q1 == 0) and (num_tasks_q2 == 0):
@@ -514,7 +514,7 @@ while 1:
 				print "    Download data failed!"
 			StopTaskList[i].remote_task_delete()
 			query="update tasks set task_status='refused' where task_id=%d" %StopTaskList[i].task_id
-			curs.execute(query)
+			db2.db_execute_query(curs, query);
 			StopTaskList[i].email_notify_on_finish("refused")
 			proc_num = min(num_mult_proc, proc_num + StopTaskList[i].num_procs)
 			
@@ -534,7 +534,7 @@ while 1:
 				RunTaskList[i].remote_task_delete()
 				query="update tasks set task_status='finished',date_of_finishing=CURRENT_DATE where task_id=%d" %RunTaskList[i].task_id
 				#RunTaskList[i].task_status = 'finished'
-				curs.execute(query)
+				db2.db_execute_query(curs, query);
 				RunTaskList[i].email_notify_on_finish("success")
 				proc_num = min(num_mult_proc, proc_num + RunTaskList[i].num_procs)
 				#del RunTaskList[i]
@@ -557,7 +557,7 @@ while 1:
 				SbmTaskList[i].download_data()
 				SbmTaskList[i].remote_task_delete()
 				query="update tasks set task_status='finished',date_of_finishing=CURRENT_DATE where task_id=%d" %SbmTaskList[i].task_id
-				curs.execute(query)
+				db2.db_execute_query(curs, query);
 				SbmTaskList[i].email_notify_on_finish("success")
 				proc_num = min(num_mult_proc, proc_num + SbmTaskList[i].num_procs)
 				#del SbmTaskList[i]
@@ -578,7 +578,7 @@ while 1:
 				print "    TASK ERROR!!"
 			
 			query="update tasks set task_status='refused' where task_id=%d" %SbmTaskList[i].task_id
-			curs.execute(query)
+			db2.db_execute_query(curs, query);
 			SbmTaskList[i].email_notify_on_finish("refused")
 			proc_num = min(num_mult_proc, proc_num + SbmTaskList[i].num_procs)
 			
@@ -612,20 +612,20 @@ while 1:
 				except:
 					print "    Upload data for task %d failed!" %NqTaskList[i].task_id
 					query="update tasks set task_status='stopped', priority_max=1005 where task_id=%d" %NqTaskList[i].task_id
-					curs.execute(query)
+					db2.db_execute_query(curs, query);
 					continue
 				status=NqTaskList[i].run()
 				if status:
 					print "    Run task %d failed!" %NqTaskList[i].task_id
 					query="update tasks set task_status='stopped', priority_max=1010 where task_id=%d" %NqTaskList[i].task_id
-					curs.execute(query)
+					db2.db_execute_query(curs, query);
 					continue
 				query="update tasks set task_status='submitted', running_time=NOW(), queue_num=%d where task_id=%d" %\
 				(
 					NqTaskList[i].queue_num,
 					NqTaskList[i].task_id
 				)
-				curs.execute(query)
+				db2.db_execute_query(curs, query);
 				if proc_num == 0:
 					break			
 
@@ -644,8 +644,8 @@ while 1:
 		where
 			multiprocessors.queue_alg = "backfill" 
 	"""
-	curs.execute(query)
-	resultM=curs.fetchall()
+	db2.db_execute_query(curs, query);
+	resultM=db2.db_fetchall(curs)
 	num_multiprocessors=len(resultM)
 	#print "%d multiprocessor(s) use(s) algorithm 'backfill':" %num_multiprocessors
 	rt = datetime.datetime.today()
@@ -685,8 +685,8 @@ while 1:
 				(multiprocessors.multiprocessor_id = %d) and 
 				(tasks.user_id=users.user_id)
 		"""%mult_id
-		curs.execute(query)
-		result=curs.fetchall()
+		db2.db_execute_query(curs, query);
+		result=db2.db_fetchall(curs)
 		num_tasks=len(result)
 		
 		print "\tnumber of tasks on multiproc with ID %d is %d" %(mult_id, num_tasks)
@@ -718,7 +718,7 @@ while 1:
 					print "    Download data failed!"
 				tsk.remote_task_delete()
 				query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
-				curs.execute(query)
+				db2.db_execute_query(curs, query);
 				tsk.email_notify_on_finish("refused")
 
 			#
@@ -736,7 +736,7 @@ while 1:
 					tsk.download_data()
 					tsk.remote_task_delete()
 					query="update tasks set task_status='finished',date_of_finishing=CURRENT_DATE where task_id=%d" %tsk.task_id
-					curs.execute(query)
+					db2.db_execute_query(curs, query);
 					tsk.email_notify_on_finish("success")
 					continue
 					
@@ -744,7 +744,7 @@ while 1:
 					SubmittedTask.append([tsk.task_id,tsk.priority_max,tsk.duration_in_minutes*60,tsk.num_procs])
 					SubTaskId.append([tsk.task_id])
 					query="update tasks set running_time=NOW() where task_id=%d" %tsk.task_id
-					curs.execute(query)
+					db2.db_execute_query(curs, query);
 					continue
 					
 				if (status==4) or (status==3):
@@ -753,11 +753,11 @@ while 1:
 					if TimeDuration < datetime.timedelta(seconds=0):
 						TimeDuration = datetime.timedelta(seconds=tsk.duration_in_minutes*60)
 						query="update tasks set running_time=NOW(), task_status='running' where task_id=%d" %tsk.task_id
-						curs.execute(query)
+						db2.db_execute_query(curs, query);
 					SubmittedTask.append([tsk.task_id,tsk.priority_max,TimeDuration.seconds,tsk.num_procs])
 					SubTaskId.append(tsk.task_id)
 					query="update tasks set task_status='running' where task_id=%d" %tsk.task_id
-					curs.execute(query)
+					db2.db_execute_query(curs, query);
 					continue
 
 				#
@@ -772,7 +772,7 @@ while 1:
 				print "    !!!!!!!!REFUSED!!!!!!!!!!"
 				print status
 				query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
-				curs.execute(query)
+				db2.db_execute_query(curs, query);
 				tsk.email_notify_on_finish("refused")
 
 		#run backfill
@@ -791,7 +791,7 @@ while 1:
 					tasks.task_id=%(num_t)d 
 					
 				"""%{'run_t': tsklist[Tasks[0]].running_time, "num_t": tsklist[Tasks[0]].task_id}
-			curs.execute(query)
+			db2.db_execute_query(curs, query);
 			if Tasks[1]<global_vars.timeout_server:
 				if tsklist[Tasks[0]].task_id not in SubTaskId:
 					print "subtasks"
@@ -805,17 +805,17 @@ while 1:
 					except:
 						print "    Upload data for task %d failed!" %tsk.task_id
 						query="update tasks set task_status='stopped',priority_max=1005 where task_id=%d" %tsk.task_id
-						curs.execute(query)
+						db2.db_execute_query(curs, query);
 						continue
 					status=tsk.run()
 					if status:
 						print "    Run task %d failed!" %tsk.task_id
 						query="update tasks set task_status='stopped' ,priority_max=1010 where task_id=%d" %tsk.task_id
-						curs.execute(query)
+						db2.db_execute_query(curs, query);
 						continue
 					query="update tasks set task_status='submitted', running_time=NOW(), priority_max=111 where task_id=%d" %tsk.task_id
 					#user pay tokens 
-					curs.execute(query)
+					db2.db_execute_query(curs, query);
 					query=\
 					"""
 						update 
@@ -827,7 +827,7 @@ while 1:
 							tasks.task_id='%d' and 
 							users.user_id=tasks.user_id
 					"""%(Tasks[0])
-					curs.execute(query)
+					db2.db_execute_query(curs, query);
 					
 	time.sleep(60)			
 print "Server ends successfully!"
