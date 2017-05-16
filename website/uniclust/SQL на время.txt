@@ -1,0 +1,166 @@
+--
+-- Table structure for table 'rights'
+-- 
+
+DROP TABLE IF EXISTS `rights`;
+		
+CREATE TABLE `rights` (
+  `rights_id` INTEGER AUTO_INCREMENT ,
+  `right` VARCHAR(40) ,
+  PRIMARY KEY (`rights_id`)
+);
+
+
+
+
+
+--
+-- Table structure for table 'uniclust_users'
+-- 
+
+DROP TABLE IF EXISTS `uniclust_users`;
+		
+CREATE TABLE `uniclust_users` (
+  `uniclust_users_id` INTEGER(10) AUTO_INCREMENT ,
+  `login` VARCHAR(20) UNIQUE,
+  `email` VARCHAR(100) UNIQUE,
+  `password` VARCHAR(100) ,
+  `full_user_name` VARCHAR(250) ,
+  `date_of_registration` DATE ,
+  `priority_tokens` INTEGER(11) ,
+  `id_rights` INTEGER ,
+  #чтобы определить, какой сущности друпала принадлежит конкретный пользователь юникласта
+  `id_drupal_entities` INTEGER DEFAULT NULL,
+  `key` VARCHAR(32) NOT NULL,
+  PRIMARY KEY (`uniclust_users_id`),
+  FOREIGN KEY (`id_rights`) REFERENCES `rights`(`rights_id`),
+  FOREIGN KEY (`id_drupal_entities`) REFERENCES `drupal_entities`(`drupal_entities_id`)
+);
+
+
+/*
+ *работает! Принимает email, priority_token, rights_id, пароль (если указан - а если нет, то ''), айди сущности друпала из таблицы drupal_entities
+ *Возвращает данные пользователя, который только что сгенерировался и добавился в таблицу uniclust_users
+ *Пароль заносится в таблицу в виде md5-хэша, а из процедуры возвращается в обычном виде однажды.
+ *Больше сам пароль никогда не найти, только хэш!
+
+*/
+DELIMITER //
+CREATE PROCEDURE `test_5` (IN email VARCHAR(100), IN priority_token INT, IN rights_id INT, IN pass VARCHAR(200), IN id_drupal_entity INT)
+BEGIN
+    DECLARE is_there_such_login INT;
+    DECLARE new_login VARCHAR(32);
+    DECLARE new_pass_hash VARCHAR(34);
+    DECLARE random INT;
+    DECLARE length_of_new_login INT;
+    DECLARE key_binder VARCHAR(32);
+    DECLARE is_there_such_key_binder INT;
+    SET is_there_such_login = 1;
+    SET is_there_such_key_binder = 1;
+    WHILE is_there_such_login DO 
+        SET new_login = MD5(CONV(FLOOR(RAND()*9999999999),20,36));
+        SET random = FLOOR(RAND()*10)+1;
+        SET length_of_new_login = FLOOR(RAND()*12+10);
+        SELECT SUBSTRING(new_login, random, length_of_new_login) INTO new_login;
+        SELECT COUNT(uniclust_users.uniclust_users_id) INTO is_there_such_login FROM uniclust_users WHERE uniclust_users.login = new_login;
+    END WHILE;
+    IF LENGTH(pass) < 6 THEN
+    	SET pass = SUBSTRING(MD5(CONV(FLOOR(RAND()*9999999999),20,36)), FLOOR(RAND()*10)+1, (FLOOR(RAND()*8)+6));
+    END IF;
+    SET new_pass_hash = MD5(CONCAT(LEFT(pass, 1), MD5(pass), RIGHT(pass, 1)));
+    WHILE is_there_such_key_binder DO
+    	SET key_binder = MD5(CONV(FLOOR(RAND()*9999999999),20,36));
+        SELECT COUNT(uniclust_users.`key`) INTO is_there_such_key_binder FROM uniclust_users WHERE uniclust_users.`key` = key_binder;
+    END WHILE;
+    INSERT INTO uniclust_users(`login`, `email`, `password`, `date_of_registration`, `priority_tokens`, `id_rights`, `key`, `id_drupal_entities`) VALUES (new_login, email, new_pass_hash, CURRENT_DATE(), priority_token, rights_id, key_binder, id_drupal_entity);
+    SELECT last_insert_id() as 'id_user', new_login as 'login', pass as 'password', email as 'email', rights_id as 'rights_id', priority_token as 'priority_token', key_binder as 'key';
+END//
+
+
+DELIMITER //
+CREATE PROCEDURE `test_7` (IN email VARCHAR(100), IN priority_token INT, IN rights_id INT, IN pass VARCHAR(200), IN drupal_entity_key VARCHAR(32))
+BEGIN
+	DECLARE id_drupal_entity INT;
+	SELECT drupal_entities.drupal_entities_id INTO id_drupal_entity FROM drupal_entities WHERE drupal_entities.key = drupal_entity_key;
+    IF id_drupal_entity > 0 THEN
+    	CALL `test_5`(email, priority_token, rights_id, pass, id_drupal_entity);
+    END IF;
+END//
+
+
+CALL `test_7`('gfdssdf',1,2,'12345','1234567890')
+
+
+
+
+//таблица юникласта для хранения ключей каждой сущности друпал
+DROP TABLE IF EXISTS `drupal_entities`;
+		
+CREATE TABLE `drupal_entities` (
+  `drupal_entities_id` INTEGER(10) AUTO_INCREMENT,
+  `using` INTEGER DEFAULT 0, 
+  `key` VARCHAR(32) NOT NULL UNIQUE,
+   `description` VARCHAR(255) ,
+  PRIMARY KEY (`drupal_entities_id`)
+);
+
+
+//процедура для выдачи нового ключа новой сущности драпала и занесение его в таблицу юникласта
+DELIMITER //
+CREATE PROCEDURE `GetKeyToTheDrupalEntity` ()
+BEGIN
+    DECLARE is_there_such_key INT;
+    DECLARE new_key VARCHAR(32);
+    SET is_there_such_key = 1;
+    WHILE is_there_such_key DO 
+        SET new_key = MD5(CONV(FLOOR(RAND()*9999999999),20,36));
+        SELECT COUNT(drupal_entities.drupal_entities_id) INTO is_there_such_key FROM drupal_entities WHERE drupal_entities.key = new_key;
+    END WHILE;
+    INSERT INTO drupal_entities(`key`, description) VALUES (new_key, NULL);
+    SELECT new_key as 'key';
+END//
+
+INSERT INTO {drupal_key_for_uniclust} (key) VALUES (:db_insert_placeholder_0); Array ( [:db_insert_placeholder_0] => ab2f006a00ecb9d45b227a4d4c6e6d7f )
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE `isThereSuchKeyOfDrupalEntity` (IN unique_key VARCHAR(100))
+BEGIN
+DECLARE is_there_such_key INT;
+SELECT COUNT(drupal_entities.drupal_entities_id) INTO is_there_such_key FROM drupal_entities WHERE drupal_entities.key = unique_key;
+    IF is_there_such_key = 1 THEN
+    	SELECT 'YES' AS 'Answer', drupal_entities.drupal_entities_id FROM drupal_entities WHERE drupal_entities.key = unique_key;
+    ELSE
+    	SELECT 'NO' AS 'Answer';
+    END IF;
+END//
+
+
+DELIMITER //
+CREATE PROCEDURE `SetKeyToUsing` (IN unique_key VARCHAR(100))
+BEGIN
+	UPDATE drupal_entities SET drupal_entities.using = 1 WHERE drupal_entities.key = unique_key;
+END//
+
+
+
+
+--Временная таблица для файлов пользователей UNICLUST
+DROP TABLE IF EXISTS `uniclust_files`;
+		
+CREATE TABLE `uniclust_files` (
+  `file_id` INTEGER AUTO_INCREMENT ,
+  `name` VARCHAR(512) ,
+  `status` ENUM ('ready', 'running', 'error'),
+  `user_id` INTEGER ,
+  `size` INTEGER ,
+  `full_path` VARCHAR(1024) ,
+  PRIMARY KEY (`file_id`)
+);
+ALTER TABLE `uniclust_files` ADD FOREIGN KEY (user_id) REFERENCES `uniclust_users` (`uniclust_users_id`);
+INSERT INTO `uniclust_files`(name,`status`,user_id,size) VALUES ('abcdef','ready',20,20000000);
+
+
+

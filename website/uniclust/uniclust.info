@@ -1,0 +1,5 @@
+name = Uniclust-module
+description = Модуль Uniclust, предназначенный для автоматизации процесса постановки задач на выполнение на суперкомпьютера.
+core = 7.x
+configure = admin/config/uniclust/config_form
+

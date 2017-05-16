@@ -1,0 +1,102 @@
+<?php
+function uniclust_schema()
+{
+	$schema['uniclust_drupal_user_bindings'] = array
+	(
+		'description' => 'The table destiny is to keep bindings between uniclust users and Drupal users.',
+		'fields' => array
+		(
+			'uniclust_drupal_user_bundings_id' => array
+			(
+				'description' => 'The primary identifier for a record.',
+				'type' => 'serial',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+			),
+			'drupal_uid'  => array
+			(
+				'description' => 'Field contains id of Drupal user.',
+				'type' => 'int',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+				'default' => 0,
+			),
+			'uniclust_key'  => array
+			(
+				'description' => 'Field contains the key of the specific uniclust user.',
+				'type' => 'varchar',
+				'length' => 32,
+				'not null' => TRUE,
+			),
+		),
+		'primary key' => array('uniclust_drupal_user_bundings_id'),
+	);
+	$schema['drupal_key_for_uniclust'] = array
+	(
+		'description' => 'The table keeps the unique key of such Drupal entity.',
+		'fields' => array
+		(
+			'drupal_key_for_uniclust_id' => array
+			(
+				'description' => 'The primary identifier for a record.',
+				'type' => 'serial',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+			),
+			'unique_key'  => array
+			(
+				'description' => 'Field contains the key of the Drupal entity.',
+				'type' => 'varchar',
+				'length' => 32,
+				'not null' => TRUE,
+			),
+		),
+		'primary key' => array('drupal_key_for_uniclust_id'),
+	);
+	return $schema;
+}
+
+/** 
+ * –реализаци€ hook_install()
+ */
+
+function uniclust_install() {
+    //drupal_install_schema('uniclust'); //вызываетс€ автоматически! ≈сли раскомментировать, то при установке модуля вылезет ошибка!
+	//При установке модуля, юникласту будет необходимо как-то идентифицировать определённую сущность друпала, поэтому нужно получить некий уникальный ключ от юникласта.
+	/*$key = '';
+	$link = get_db_connection();
+	$query ="call `GetKeyToTheDrupalEntity`()";
+	$result = mysqli_query($link, $query);// or die("Ошибка выполнения запроса" . mysqli_error($link));
+	
+	if($result)
+	{
+		$row = mysqli_fetch_array($result);
+		$key = $row['key'];
+		mysqli_close($link);
+		$nid = db_insert('drupal_key_for_uniclust')
+		  ->fields(array(
+		   'unique_key' => $key,
+		  ))
+		  ->execute();
+		global $drupal_entity_key_uniclust;
+		$drupal_entity_key_uniclust = $key;
+		return;
+	}
+	else
+	{
+		uniclust_uninstall();
+		drupal_set_message(t('Не удалось получить уникальный ключ для этой сущности Drupal от сервера UNICLUST. Повторите попытку установки модуля позже!' . mysqli_error($link)),'error');
+		
+	}
+	mysqli_close($link);*/
+	
+	//drupal_set_message('Модуль был установлен, Димас. Спокуха!');
+}
+ 
+/**
+ * –реализаци€ hook_uninstall()
+ * ”даление таблицы table1 при удалении модуля
+ */
+function uniclust_uninstall() {
+    drupal_uninstall_schema('uniclust');
+}
