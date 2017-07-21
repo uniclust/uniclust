@@ -1,7 +1,7 @@
-Предупреждение "Warning: mb_strlen() expects parameter 1 to be string, array given in drupal_strlen()".
-Смысл в том, что в форме мы задаём максимальную длину полей. В hook_form_validate проверяется длина этих полей
-и вызывается функция drupal_strlen. Она как-то криво написана в папке с сайтом в файле includes/unicode.inc изменить
-функцию drupal_strlen на вот такую:
+РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ "Warning: mb_strlen() expects parameter 1 to be string, array given in drupal_strlen()".
+РЎРјС‹СЃР» РІ С‚РѕРј, С‡С‚Рѕ РІ С„РѕСЂРјРµ РјС‹ Р·Р°РґР°С‘Рј РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ РґР»РёРЅСѓ РїРѕР»РµР№. Р’ hook_form_validate РїСЂРѕРІРµСЂСЏРµС‚СЃСЏ РґР»РёРЅР° СЌС‚РёС… РїРѕР»РµР№
+Рё РІС‹Р·С‹РІР°РµС‚СЃСЏ С„СѓРЅРєС†РёСЏ drupal_strlen. РћРЅР° РєР°Рє-С‚Рѕ РєСЂРёРІРѕ РЅР°РїРёСЃР°РЅР° РІ РїР°РїРєРµ СЃ СЃР°Р№С‚РѕРј РІ С„Р°Р№Р»Рµ includes/unicode.inc РёР·РјРµРЅРёС‚СЊ
+С„СѓРЅРєС†РёСЋ drupal_strlen РЅР° РІРѕС‚ С‚Р°РєСѓСЋ:
 
 function drupal_strlen($text) {
   global $multibyte;
@@ -28,5 +28,5 @@ function drupal_strlen($text) {
 }
 
 
-Последний вставленный id за нынешнее подключение в mysql:
+РџРѕСЃР»РµРґРЅРёР№ РІСЃС‚Р°РІР»РµРЅРЅС‹Р№ id Р·Р° РЅС‹РЅРµС€РЅРµРµ РїРѕРґРєР»СЋС‡РµРЅРёРµ РІ mysql:
 select last_insert_id()
