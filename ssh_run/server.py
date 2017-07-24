@@ -13,6 +13,9 @@ import fcntl
 import filecache/PythonApplication3
 import filecache/db2
 
+import uniclust
+
+
 flag=True
 #os.unlink(global_vars.lock_path)
 
@@ -835,3 +838,48 @@ print "-------------------------"
 
 
 os.unlink(global_vars.lock_path)
+
+
+#
+#
+# New style of server.py
+#
+#
+
+def main(argv=None):
+    """
+    Main function of  Server
+    """
+    if argv == None:
+        argv=sys.argv
+
+    args=server_common.parse_arguments(argv)
+
+    config=server_common.parse_config_file(args.config_file_name)
+
+    
+    if args.become_daemon == 'no':
+        server_common.become_daemon(config,False)
+    else:
+        server_common.become_daemon(config,True)
+    
+    try:
+        b=abstract_db.connect(config)
+    except Abstract_db, e:
+        sys.stderr.write(_("Database connection failed: %s"),e.strerror)
+        return 1
+
+    while True:
+        
+
+
+
+    return 0
+
+    
+
+
+if __name__ == "__main__":
+        sys.exit(main())
+
+

@@ -2,6 +2,7 @@
 
 import os
 import fcntl
+import argparse
 
 from pwd import getpwnam
 
@@ -70,7 +71,7 @@ def become_daemon(config,really_become = True):
     # privileges
     goal_uid=getpwnam(config['user']).pw_uid
     goal_gid=getpwnam(config['group']).pw_gid
-
+    
     try:
         f=os.open(config['lock_file'],os.O_CREAT|os.O_WRONLY|os.O_SYNC, 0600)
         fcntl.flock(f,fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -79,20 +80,20 @@ def become_daemon(config,really_become = True):
         print "Try to delete the locking file '%s' manually" % (config['lock_file'])
         print "Reasoning is: %s" % (s)
         sys.exit(1)
-
-    print "Сhecking server lock... OK!"
     
+    print "Сhecking server lock... OK!"
+
     if really_become == False:
         if os.geteuid() != goal_uid :
             print "warning: effective user id is not equal id for '%s'" % (config['user'])
         if os.getegid() != goal_gid :
             print "warning: effective group id is not equal id for '%s'" % (config['group'])
         return
-
+    
     if os.geteuid()!= 0:
         print "Sorry, you need root privilegies to run it as daemon"
         sys.exit(1)
-
+    
     #
     # Do first fork
     #
@@ -109,12 +110,12 @@ def become_daemon(config,really_become = True):
     #
     # write pid file
     pidfile = file(config['pid_file'], 'w')
-
+    
     # decouple from parent environment
     os.chdir("/")
     os.umask(0)
     os.setsid()
-
+    
     # Do second fork
     try:
         pid = os.fork()
@@ -124,19 +125,19 @@ def become_daemon(config,really_become = True):
     except OSError, e:
         sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
         sys.exit(1)
-
-
+    
+    
     sys.stdout.write("Successfully daemonization!")
     
     # redirect standard file descriptors
     sys.stdout.flush()
     sys.stderr.flush()
     sys.stdin.close()
-
+    
     #si = file('dev/null', 'r')
     so = file(config[logfile], 'a+')
     se = file(config[errfile], 'a+')
-
+    
     #os.dup2(si.fileno(), sys.stdin.fileno())
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
@@ -144,12 +145,12 @@ def become_daemon(config,really_become = True):
     
     pid=os.getpid()
     pidfile.write(pid)
-  
+    
     #TODO
     # Make lock for it
     #
     pidfile.fclose()
-
+    
     #
     # change user
     #
@@ -157,8 +158,40 @@ def become_daemon(config,really_become = True):
     os.setpid(goal_pid)
     os.setegid(goal_gid)
     os.seteuid(goal_uid)
-
+    
     sys.stdout.write("Success io redirection")
 
-    
 
+def parse_arguments(argv):
+    """
+    Parsing arguments for server
+    """
+    parser = argparse.ArgumentParser(
+            description=_("""
+             This program is server for running users tasks on several
+             supercomputers. For details see:
+             https://github.com/uniclust
+             """),
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    parser.add_argument(
+            '--config',
+            dest='config_file_name',
+            required=False,
+            help=_('Name of config file'),
+            default="/etc/uniclust/uniclust.conf"
+    )
+    
+    parser.add_argument(
+            '--become_daemon',
+            dest='become_daemon',
+            required=False,
+            choices= [ 'yes', 'no' ],
+            default='yes'
+            help=_('Run not in daemon mode')
+    )
+
+    args = parser.parse_args()
+    return args
+   
