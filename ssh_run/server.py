@@ -13,7 +13,7 @@ import fcntl
 import filecache/PythonApplication3
 import filecache/db2
 
-import uniclust
+from uniclust import *
 
 
 flag=True
@@ -864,13 +864,13 @@ def main(argv=None):
         server_common.become_daemon(config,True)
     
     try:
-        b=abstract_db.connect(config)
-    except Abstract_db, e:
-        sys.stderr.write(_("Database connection failed: %s"),e.strerror)
-        return 1
+        db=abstract_db(config)
+        if db == None:
+           sys.stderr.write(_("Database connection failed")
+           return 1
 
     while True:
-        
+            
 
 
 
