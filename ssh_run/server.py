@@ -29,23 +29,23 @@ for l in f.read().split('\n'):
 f.close()
 
 if 'pidfile' not in config:
-	config[pidfile] = '/var/run/uniclust.pid'
+	config['pidfile'] = '/var/run/uniclust.pid'
 
 if 'user' not in config:
-	config[user] = 'root'
+	config['user'] = 'root'
 
 if 'logfile' not in config:
-	config[logfile] = '/var/log/uniclust.log'
+	config['logfile'] = '/var/log/uniclust.log'
 
 if 'errfile' not in config:
-	config[errfile] = '/var/log/uniclust.err'
+	config['errfile'] = '/var/log/uniclust.err'
 
 # privileges
 from pwd import getpwnam
-os.setuid(getpwnam(config[user]).pw_uid)
-os.setgid(getpwnam(config[user]).pw_gid)
+os.setuid(getpwnam(config['user']).pw_uid)
+os.setgid(getpwnam(config['user']).pw_gid)
 
-try: 
+try:
 	f=os.open(global_vars.lock_path,os.O_CREAT|os.O_WRONLY|os.O_SYNC, 0600)
 	#f = open(global_vars.lock_path, "w")
 	#pid = str(os.getpid())
@@ -74,9 +74,9 @@ except OSError, e:
 	sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
 	sys.exit(1)
 # write pid file
-pidfile = file(config[pidfile], 'w')
-pidfile.write(pid)
-pidfile.fclose()
+pidfile = file(config['pidfile'], 'w')
+pidfile.write(str(pid))
+pidfile.close()
 # decouple from parent environment
 os.chdir("/")
 os.umask(0)
@@ -95,8 +95,8 @@ sys.stdout.write("Success!")
 sys.stdout.flush()
 sys.stderr.flush()
 #si = file('dev/null', 'r')
-so = file(config[logfile], 'a+')
-se = file(config[errfile], 'a+', 0)
+so = file(config['logfile'], 'a+')
+se = file(config['errfile'], 'a+', 0)
 #os.dup2(si.fileno(), sys.stdin.fileno())
 os.dup2(so.fileno(), sys.stdout.fileno())
 os.dup2(se.fileno(), sys.stderr.fileno())
@@ -181,7 +181,7 @@ while 1:
 
 	query=\
 	"""
-		select 
+		select
 			tasks.user_id,
 			tasks.task_id,
 			tasks.algorithm,
@@ -247,7 +247,7 @@ while 1:
 		
 		#
 		#
-		# running tasks 
+		# running tasks
 		#
 		#
 		if tsk.task_status=="ready":
@@ -323,7 +323,7 @@ while 1:
 
 	query=\
 	"""
-		select 
+		select
 			multiprocessors.num_available_procs,
 			multiprocessors.multiprocessor_id
 		from
@@ -345,7 +345,7 @@ while 1:
 		
 		SubmittedTask = []
 		SubTaskId = []
-		TaskList = [] 
+		TaskList = []
 		RunTaskList = []
 		SbmTaskList = []
 		StopTaskList = []
@@ -354,10 +354,10 @@ while 1:
 		NewRunTaskList = []
 		NewSbmTaskList = []
 		tsklist = {}
-		#select queued & not queued 
+		#select queued & not queued
 		query=\
 		"""
-			select 
+			select
 				tasks.user_id,
 				tasks.task_id,
 				tasks.algorithm,
@@ -381,7 +381,7 @@ while 1:
 			where
 				(tasks.queue_num is NULL) and (tasks.task_status="ready") and
 				(tasks.multiprocessor_id=multiprocessors.multiprocessor_id) and
-				(multiprocessors.multiprocessor_id = %d) and 
+				(multiprocessors.multiprocessor_id = %d) and
 				(tasks.user_id=users.user_id)
 		"""%mult_id
 		curs.execute(query)
@@ -390,7 +390,7 @@ while 1:
 		
 		query=\
 		"""
-			select 
+			select
 				tasks.user_id,
 				tasks.task_id,
 				tasks.algorithm,
@@ -412,10 +412,10 @@ while 1:
 				multiprocessors,
 				users
 			where
-				!(tasks.queue_num is NULL) and 
+				!(tasks.queue_num is NULL) and
 				((tasks.task_status="ready") or (tasks.task_status="stopped") or (tasks.task_status="submitted")) and
 				(tasks.multiprocessor_id=multiprocessors.multiprocessor_id) and
-				(multiprocessors.multiprocessor_id = %d) and 
+				(multiprocessors.multiprocessor_id = %d) and
 				(tasks.user_id=users.user_id)
 		"""%mult_id
 		curs.execute(query)
@@ -429,7 +429,7 @@ while 1:
 		#select broken tasks
 		query=\
 		"""
-			select 
+			select
 				tasks.user_id,
 				tasks.task_id,
 				tasks.algorithm,
@@ -453,7 +453,7 @@ while 1:
 			where
 				(tasks.queue_num is NULL) and (tasks.task_status="stopped") and
 				(tasks.multiprocessor_id=multiprocessors.multiprocessor_id) and
-				(multiprocessors.multiprocessor_id = %d) and 
+				(multiprocessors.multiprocessor_id = %d) and
 				(tasks.user_id=users.user_id)
 		"""%mult_id
 		curs.execute(query)
@@ -482,7 +482,7 @@ while 1:
 		
 		for i in range(0,num_tasks_q2):
 			tsk=task.Task(result_q2[i])
-			if (tsk.task_status == "submitted"):			
+			if (tsk.task_status == "submitted"):
 				#SbmTaskList.append([tsk.task_id, tsk.duration_in_minutes*60, tsk.num_procs, tsk.queue_num])
 				SbmTaskList.append(tsk)
 				proc_num = max(0, proc_num - tsk.num_procs)
@@ -495,14 +495,14 @@ while 1:
 				#StopTaskList.append([tsk.task_id, tsk.duration_in_minutes*60, tsk.num_procs, tsk.queue_num])
 				StopTaskList.append(tsk)
 				proc_num = max(0, proc_num - tsk.num_procs)
-			#do we need it?	
-			elif (tsk.task_status == "ready"):	
+			#do we need it?
+			elif (tsk.task_status == "ready"):
 				#ReadyTaskList.append([tsk.task_id, tsk.duration_in_minutes*60, tsk.num_procs, tsk.queue_num])
 				ReadyTaskList.append(tsk)
 		#
 		# stopping tasks
 		#
-		for i in range (0, len(StopTaskList)): 	
+		for i in range (0, len(StopTaskList)):
 			try:
 				StopTaskList[i].download_data()
 			except:
@@ -518,7 +518,7 @@ while 1:
 		#
 		#check tasks
 		#
-		for i in range (0, len(RunTaskList)): 
+		for i in range (0, len(RunTaskList)):
 			
 			status=RunTaskList[i].check()
 			print "    Task check: %d" %status
@@ -600,8 +600,8 @@ while 1:
 				NqTaskList[i].queue_num = place
 				place = place + 1
 				#
-				# running tasks 
-				#			
+				# running tasks
+				#
 				try:
 					NqTaskList[i].upload_data()
 				except:
@@ -622,7 +622,7 @@ while 1:
 				)
 				curs.execute(query)
 				if proc_num == 0:
-					break			
+					break
 
 
 
@@ -631,13 +631,13 @@ while 1:
 
 	query=\
 	"""
-		select 
+		select
 			multiprocessors.num_available_procs,
 			multiprocessors.multiprocessor_id
 		from
 			multiprocessors
 		where
-			multiprocessors.queue_alg = "backfill" 
+			multiprocessors.queue_alg = "backfill"
 	"""
 	curs.execute(query)
 	resultM=curs.fetchall()
@@ -651,11 +651,11 @@ while 1:
 		
 		SubmittedTask = []
 		SubTaskId = []
-		TaskList = [] 
+		TaskList = []
 		tsklist = {}
 		query=\
 		"""
-			select 
+			select
 				tasks.user_id,
 				tasks.task_id,
 				tasks.algorithm,
@@ -677,7 +677,7 @@ while 1:
 			where
 				((tasks.task_status="ready") or (tasks.task_status="stopped") or (tasks.task_status="running") or (tasks.task_status="submitted")) and
 				(tasks.multiprocessor_id=multiprocessors.multiprocessor_id) and
-				(multiprocessors.multiprocessor_id = %d) and 
+				(multiprocessors.multiprocessor_id = %d) and
 				(tasks.user_id=users.user_id)
 		"""%mult_id
 		curs.execute(query)
@@ -693,7 +693,7 @@ while 1:
 
 			#
 			#
-			# running tasks 
+			# running tasks
 			# Add to Task List
 			#
 			#
@@ -778,12 +778,12 @@ while 1:
 			tsklist[Tasks[0]].running_time = rt + runt
 			query=\
 				"""
-				update 
-					tasks 
-				set 
+				update
+					tasks
+				set
 					tasks.running_time='%(run_t)s'
-				where 
-					tasks.task_id=%(num_t)d 
+				where
+					tasks.task_id=%(num_t)d
 					
 				"""%{'run_t': tsklist[Tasks[0]].running_time, "num_t": tsklist[Tasks[0]].task_id}
 			curs.execute(query)
