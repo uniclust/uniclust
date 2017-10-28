@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*
-try:
-    import pymysql as sql
-    sql.install_as_MySQLdb()
-except ImportError:
-    pass
+import pymysql as sql
+import cl_operation as class_operations
+import cl_file as class_files
 
 class Db_connection(object):
-    def    __init__(self, *args, **kwargs):
+    def    __init__(self,**kwargs):
         """
         Creating database object and connecting it to
         really database
@@ -17,58 +14,53 @@ class Db_connection(object):
 
         self.debug = False;
         try:
-            self.db = sql.connect(*args, **kwargs);
+            self.db = sql.connect(**kwargs);
         except sql.InternalError as str:
             print(str.args);
     
         self.curs = self.db.cursor();
-    def get_cursor(self):
-        return self.db.cursor();
-
-    def get_error(self):
-        if self.error == True:
-            return self.error_message;
-        
-        return False;
     def execute_query( self, query ):
         return self.curs.execute( query );
 
     def fetchall(self):
         return self.curs.fetchall();
 
-    def main_select_query(self):
+    def query_get_all_new_operations(self):
         """
-        Select all operations that has status 'new' and return list
+        Select all operations that has status 'new' and return class operations
         """
         query=\
         """
         select 
-            operations.operation_id,
-            operations.file_id,
-            operations.oper_type,
-            operations.multiprocessor_id
+            *
         from
             operations
-        where
-            operations.status="new"
+
         """
         if self.debug:
             print(query);
 
         result = self.execute_query(query);
-        return self.fetchall();
+        result = self.fetchall()
 
-    def stock_checkfile_query(self, file_id):
+        lst = list();
+        if len(result):
+            for obj in result:
+                lst.append(class_operations.cl_operation(obj))
+
+            return lst;
+
+        return False;
+
+    def query_get_fileinfo_by_fileid(self, file_id):
         """
-        Check file status for executing operation,
-        return [0] => `status`, [1] => `user_id`, [2] => `size`
+        Return `cl_file` python class
         """
+
         query =\
         """
         SELECT 
-            `status`,
-            `user_id`,
-            `size`
+            *
         FROM 
             `files`
         WHERE 
@@ -79,10 +71,9 @@ class Db_connection(object):
             print(query);
 
         result = self.execute_query(query);
-        fetch = self.fetchall();
-        fstatus = fetch[0][0];
+        result = self.fetchall()
 
-        if fstatus != 'ready':
-            raise Exception("Error File status")
+        if len(result):
+            return class_files.cl_file(result[0]);
 
-        return fetch;
+        return False;
