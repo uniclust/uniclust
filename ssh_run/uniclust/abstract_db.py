@@ -3,7 +3,7 @@ import cl_operation as class_operations
 import cl_file as class_files
 
 class Db_connection(object):
-    def    __init__(self,**kwargs):
+    def    __init__(self, host, user, passwd, db):
         """
         Creating database object and connecting it to
         really database
@@ -14,7 +14,7 @@ class Db_connection(object):
 
         self.debug = False;
         try:
-            self.db = sql.connect(**kwargs);
+            self.db = sql.connect(host, user, passwd, db);
         except sql.InternalError as str:
             print(str.args);
     
@@ -63,7 +63,7 @@ class Db_connection(object):
 
         return False;
     
-    def query_lock_operation(self, **kwargs):
+    def query_lock_operation(self, cl_oper, error=None):
         """
         Lock/Unlock операцию. Принимает минимум 1 аргумент ввиде 
         cl_oper=class_operation 
@@ -75,11 +75,8 @@ class Db_connection(object):
 
         RUNNING_STATUS = 2;
 
-        if len(kwargs) < 1 or 'cl_oper' not in kwargs.keys():
-            return -1; # Error
-
-        if len(kwargs) == 1:
-            arg = kwargs['cl_oper'];
+        if error is None:
+            arg = cl_oper
             query = "UPDATE `operations` SET `status`=%d WHERE `operation_id`='%d'; UPDATE `files` set `status` = 2 WHERE file_id = %d"%(RUNNING_STATUS,arg.oper_id, arg.file_id);
             self.execute_query(query);
 
@@ -88,7 +85,7 @@ class Db_connection(object):
 
             return;
 
-        arg2 = kwargs['error'];
+        arg2 = error;
         query = "UPDATE `operations` SET `status`=%d, `error_message`='%s' WHERE operation_id`='%d';\
                 UPDATE `files` SET `status`='ready' WHERE `file_id`=%d" % ( 3 if not len(arg2) else 5, arg2, arg.oper_id, arg.file_id);
 
