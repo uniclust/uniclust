@@ -1,6 +1,6 @@
 import pymysql as sql
-import cl_operation as class_operations
-import cl_file as class_files
+from db_classes import cl_file as class_files, cl_multi as class_multiproc, cl_operation as class_operations,\
+                        cl_filecache as class_filecache
 
 class Db_connection(object):
     def    __init__(self, host, user, passwd, db):
@@ -39,13 +39,13 @@ class Db_connection(object):
         lst = list();
         if len(result):
             for obj in result:
-                lst.append(class_operations.cl_operation(obj))
+                lst.append(class_operations(obj))
 
             return lst;
 
         return False;
 
-    def query_get_fileinfo_by_fileid(self, file_id):
+    def query_info_by_fileid(self, file_id):
         """
         Return `cl_file` python class
         """
@@ -59,10 +59,20 @@ class Db_connection(object):
         result = self.fetchall()
 
         if len(result):
-            return class_files.cl_file(result[0]);
+            return class_files(result[0]);
 
         return False;
-    
+    def query_set_file_status(self, file_id, status="error"):
+        """
+            Function take file_id, status and update table files
+        """
+        query = "UPDATE `files` SET `status`='%s' WHERE `file_id`='%d'"%(status, file_id);
+        if self.debug:
+            print(query);
+
+        result =self.execute_query(query);
+
+        return True;
     def query_lock_operation(self, cl_oper, error=None):
         """
         Lock/Unlock операцию. Принимает минимум 1 аргумент ввиде 
@@ -89,3 +99,61 @@ class Db_connection(object):
         query = "UPDATE `operations` SET `status`=%d, `error_message`='%s' WHERE operation_id`='%d';\
                 UPDATE `files` SET `status`='ready' WHERE `file_id`=%d" % ( 3 if not len(arg2) else 5, arg2, arg.oper_id, arg.file_id);
 
+        def query_info_by_multiid( self, multi_id):
+            """
+            Take multiproccessor id and return `cl_multi` python class
+            """
+
+            query = "SELECT * from `multiprocessors` where `multiprocessor_id`='%d' LIMIT 1"%(multi_id);
+            if self.debug:
+                print(query);
+
+            result = self.execute_query(query);
+            result = self.fetchall()
+
+            if len(result):
+                return class_multiproc(result[0]);
+
+            return False;
+
+        def query_delete_from_filecache(self, file_id, multi_id):
+            """
+            Function take file_id and multiproccessor id and delete item from table filecache
+            """
+            query = "DELETE FROM `filecache` WHERE `file_id`='%d' and `multiprocessor_id`='%d'"%(file_id, multi_id);
+            if self.debug:
+                print(query);
+
+            result =self.execute_query(query);
+
+            return True;
+
+        def query_filecache_by_id(self, multi_id = None, file_id = None, file_status = None, sorted = False):
+            """
+            Return `cl_filecache` python class
+            multi_id : multiproccessor_id
+            file_id : file id
+            file_status: from table filecache; If need select with unique file_status
+            sorted: if true select  ORDER BY (`read_counter` and `write_counter`) ASC
+            """
+
+            need_sort = "ORDER BY (`read_counter` and `write_counter`) ASC" if sorted else "";
+            with_status = " AND `status` = '{}'".format(file_status) if file_status is not None else "";
+            by_multi_id = "`multiprocessor_id`='{}' ".format(multi_id) if multi_id is not None else "";
+            by_file_id = "`file_id`='{}' ".format(file_id) if file_id is not None else "";
+
+            query = "SELECT * from `filecache` where %s %s %s %s"%(by_multi_id, by_file_id, with_status, need_sort);
+            if self.debug:
+                print(query);
+
+            result = self.execute_query(query);
+            result = self.fetchall()
+
+            lst = list();
+            if len(result):
+                for obj in result:
+                    lst.append(class_filecache(obj))
+
+                return lst;
+
+            return False;
