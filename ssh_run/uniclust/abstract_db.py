@@ -255,9 +255,9 @@ class Db_connection(object):
 
     def get_info_tasksfiles_by_params(self, **params):
             """
-            Select all operations that has status 'new' and return class operations
+            Select rows from taskfiles by params
             See class taskfiles for more info about params
-            Example get_info_taskfiles_by_params(status='0')
+            Example get_info_taskfiles_by_params(status='0') <> return all rows with status=0
             """
 
             lst = list();
@@ -281,3 +281,22 @@ class Db_connection(object):
                 return lst;
 
             raise Exception("[{}]Empty Result...".format(get_info_taskfiles_by_params.__name__));
+    
+    def update_taskfiles_by_tid_and_fid(self, task_id, file_id, **params):
+            """
+            update taskfiles by task_id and file_id
+            See class taskfiles for more info about params
+            Example update_taskfiles_by_tid_and_fid(0,0, status='1')
+            """
+
+            lst = list();
+            for value, key in params.items():
+                lst.append("`"+value+"`='"+key+"'");
+
+            str = ', '.join(lst);
+
+            query= "UPDATE `tasks_files` SET %s WHERE `task_id`='%d' AND `file_id`='%d'"%str,task_id,file_id;
+            if self.debug:
+                print(query);
+
+            result = self.execute_query(query);
