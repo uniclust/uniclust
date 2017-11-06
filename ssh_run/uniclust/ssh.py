@@ -24,7 +24,7 @@ def ssh_connect( ssh, host_name, user_name, key_path ):
 def ssh_exec( ssh, command ):
     if SSH_USE == False:
 
-        if global_vars2.DEBUG:
+        if SSH_DEBUG:
             print (command);
 
         return 0;
