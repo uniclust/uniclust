@@ -3,10 +3,10 @@
 
 # ПЕРЕДЕЛАТЬ files_qouta
 # удалять из fcache сразу после удаления файла
-import global_vars2
-import filecache
-import ssh2
-import db2
+from uniclust import filecache_globalvars as global_vars2
+from uniclust import filecache_filecache as filecache
+from uniclust import ssh2
+from uniclust import filecache_db2 as db2
 
 RUNNING_STATUS = 2;
 

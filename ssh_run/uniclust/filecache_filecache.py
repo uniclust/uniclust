@@ -7,11 +7,11 @@
 
 #paramiko переделать os.string()
 
-import global_vars2
-import ssh2
-import datetime
+from uniclust import filecache_globalvars as global_vars2
+from uniclust import ssh2
+from uniclust import filecache_db2 as db2
 
-import db2
+import datetime
 
 def force_delete(curs, ssh, file_id, multi_id):
     DEBUG = global_vars2.DEBUG;

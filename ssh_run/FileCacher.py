@@ -5,19 +5,18 @@
 #import Backfill
 #import fcntl
 
-import global_vars2
 import sys
 import os
 import datetime
 import time
 
+from uniclust import filecache_db2 as db2
+from uniclust import filecache_globalvars as global_vars2
+from uniclust import filecache_filecache as filecache
+from uniclust import filecache_operations as operation
+from uniclust import ssh2
+
 DEBUG = True;
-
-import operation
-import filecache
-import ssh2
-import db2
-
 
 error_prefix = "[Error] ";
 
