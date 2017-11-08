@@ -1,9 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*
 
+# ? ??????? filecache ???? Operation id, ??????
+# ? task_files ???????? multi_id, id
+# ? task_files ????? ?? ???????? ?????????? ? ????? ??????? ??????
+
+#paramiko переделать os.string()
+
 import global_vars2
-import exceptions
-import MySQLdb
 import ssh2
 import datetime
 
@@ -20,22 +24,25 @@ def force_delete(curs, ssh, file_id, multi_id):
     path = result[0][2];
 
     if DEBUG:
-        print '[ForceDelete] FID %d | MID %d'%(file_id, multi_id);
-        print query;
-        print "[Res] UID %s | HOST %s | Path %s"%(user_on_mult, host, path);
+        print('[ForceDelete] FID %d | MID %d'%(file_id, multi_id));
+        print(query);
+        #print "[Res] UID %d | HOST %s | Path %s"%(user_on_mult, host, path);
 
-    str_delete = "%s/files/%d"%(path,
-                file_id);
-    # SSH
-    if global_vars2.SSH == True:
-        ssh2.ssh_connect(ssh,host, user_on_mult, global_vars2.key_path);
-        sftp = ssh2.sftp_ini(ssh);
-        ssh2.sftp_delete(sftp, str_delete);
-        ssh2.sftp_close(sftp);
-        ssh2.ssh_close(ssh);
-
+    string = "rm -f %s@%s:%s/files/%d" %\
+            (
+                user_on_mult,
+			    host,
+			    path,
+                file_id
+            )
+    #status = 0;
+    status = ssh2.ssh_exec(ssh, string);
+    #status = os.string(string);
     if DEBUG:
-        print '[ForceDelete] "%s" END'%str_delete;
+        print(string);
+
+    if status:
+        raise "ForceRm failed(MultiID:%d)"%multi_id;
 
     # еще нужно удалить из filecache
     query = "DELETE FROM `filecache` WHERE `file_id`='%d' and `multiprocessor_id`='%d'"%(file_id, multi_id);
@@ -51,13 +58,13 @@ def get_file_size(curs, file_id):
     size = result[0][0];
 
     if DEBUG:
-        print '[GetFileSize] FID %d | Size %s'%(file_id, size);
+        print('[GetFileSize] FID %d | Size %s'%(file_id, size));
 
     return size;
 
 def delete_files(curs, ssh, multi_id, quota, file_size, sum):
     DEBUG = global_vars2.DEBUG;
-    query = "SELECT `file_id` FROM `filecache` WHERE `multiprocessor_id`='%d' and `status`='OK' ORDER BY (`read_counter` and `write_counter`) ASC"%multi_id;
+    query = "SELECT `file_id` FROM `filecache` WHERE `multiprocessor_id`='%d' ORDER BY (`read_counter` and `write_counter`) ASC"%multi_id;
     db2.db_execute_query(curs, query);
 
     result = db2.db_fetchall(curs);
@@ -69,7 +76,8 @@ def delete_files(curs, ssh, multi_id, quota, file_size, sum):
     i = 0;
 
     if DEBUG:
-        print '[QuotaClear] query [%s] | Len %d | quota %d | Fsize %d | sum %d'%(query, rlen, quota, file_size, sum);
+        print('[QuotaClear] query [%s] | Len %d | quota %d | Fsize %d | sum %d'%(query, rlen, quota, file_size, sum));
+
     for i in range(rlen):
         file_id = result[i][0];
 
@@ -79,7 +87,7 @@ def delete_files(curs, ssh, multi_id, quota, file_size, sum):
             take = True;
 
             if DEBUG:
-                print '[TAKEBreak] SNum %d | i %d'%(snum, i);
+                print('[TAKEBreak] SNum %d | i %d'%(snum, i));
             break;
         
 
@@ -88,7 +96,7 @@ def delete_files(curs, ssh, multi_id, quota, file_size, sum):
             file_id = result[i][0];
 
             if DEBUG:
-                print '[Quota] Delete file %d'%file_id;
+                print('[Quota] Delete file %d'%file_id);
 
             force_delete(curs, ssh, file_id, multi_id);
     else:
@@ -106,7 +114,7 @@ def get_files_sum(curs, multi_id):
     rlen = len(result);
     
     if DEBUG:
-        print '[GET|Files|Sum] Query %s | Res Len %d'%(query, rlen);
+        print('[GET|Files|Sum] Query %s | Res Len %d'%(query, rlen));
 
     if rlen == 0:
         return 0;
@@ -124,13 +132,13 @@ def get_files_sum(curs, multi_id):
     query = "SELECT SUM(size) FROM `files` WHERE (%s)"%query2;
 
     if DEBUG:
-        print query;
+        print(query);
 
     db2.db_execute_query(curs, query);
     result = db2.db_fetchall(curs);
 
     if DEBUG:
-        print '[GET|Files|Sum] End';
+        print('[GET|Files|Sum] End');
 
     return result[0][0];
 
@@ -153,7 +161,7 @@ def get_multi_id_btid(curs, task_id ):
     multi_id = result[0][0];
 
     if DEBUG:
-        print '[GetMultiID] Query [%s] | MultiID %d'%(query, multi_id);
+        print('[GetMultiID] Query [%s] | MultiID %d'%(query, multi_id));
 
     return multi_id;
 
@@ -166,8 +174,8 @@ def check_file_used(curs):
     rlen = len(result);
 
     if DEBUG:
-        print '[Start] Check file used';
-        print '[CheckFileUsed] Query [%s] | Result len %d'%(query, rlen);
+        print ('[Start] Check file used');
+        print ('[CheckFileUsed] Query [%s] | Result len %d'%(query, rlen));
 
     mytime = datetime.datetime.now();
 
@@ -190,12 +198,12 @@ def check_file_used(curs):
 
 
         if DEBUG:
-            print query;
+            print (query);
 
         query = "UPDATE `tasks_files` SET `status` = '1' WHERE `task_id`='%d' and file_id='%d'"%(task_id, file_id);
         db2.db_execute_query(curs, query);
 
         if DEBUG:
-            print query;
+            print (query);
     if DEBUG:
-        print '[End File Check]';
+        print ('[End File Check]');

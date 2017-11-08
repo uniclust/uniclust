@@ -1,10 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*
 
+# ПЕРЕДЕЛАТЬ files_qouta
+# удалять из fcache сразу после удаления файла
 import global_vars2
-import exceptions
-import MySQLdb
-
 import filecache
 import ssh2
 import db2
@@ -17,13 +16,14 @@ def delete_file_everywhere(curs, ssh, file_id, user_id, multi_id, file_size ):
     query2 = "SELECT `multiprocessor_id` from `filecache` WHERE `file_id` =%d"%file_id
     db2.db_execute_query(curs, query2);
 
+
     result = db2.db_fetchall(curs);
     num_tasks = len(result);
 
     if DEBUG:
-        print '[DELETEF] FID %d | UID %d | MID %d | FSIZE %d '%(file_id, user_id, multi_id, file_size);
-        print query2;
-        print '[Res] Num %d'%num_tasks;
+        print ('[DELETEF] FID %d | UID %d | MID %d | FSIZE %d '%(file_id, user_id, multi_id, file_size));
+        print (query2);
+        print ('[Res] Num %d'%num_tasks);
 
     for i in range(0, num_tasks):
         this = result[i][0];
@@ -33,74 +33,88 @@ def delete_file_everywhere(curs, ssh, file_id, user_id, multi_id, file_size ):
         result2 = db2.db_fetchall(curs);
 
         if DEBUG:
-            print query;
+            print (query);
+
 
         user_on_mult = result2[0][0];
         host = result2[0][1];
         path = result2[0][2];
 
         if DEBUG:
-            print "[Res] UID %s | HOST %s | Path %s"%(user_on_mult, host, path);
+            print ("[Res] UID %d | HOST %s | Path %s"%(user_on_mult, host, path));
 
-
-        str_delete = "%s/files/%d"%(path,
-                file_id);
-        # SSH
-        if global_vars2.SSH == True:
-            ssh2.ssh_connect(ssh,host, user_on_mult, global_vars2.key_path);
-            sftp = ssh2.sftp_ini(ssh);
-            ssh2.sftp_delete(sftp, str_delete);
-            ssh2.sftp_close(sftp);
-            ssh2.ssh_close(ssh);
+        string = "rm -f %s@%s:%s/files/%d" %\
+            (
+                user_on_mult,
+			    host,
+			    path,
+                file_id
+            )
+        #status = 0;
+        #status = os.string(string);
+        status = ssh2.ssh_exec(ssh, string);
 
         if DEBUG:
-            print '[DeleteFileEvery] "%s" END'%str_delete;
+            print (string);
 
+        if status:
+            raise "Rm failed(MultiID:%d)"%multi_id;
+        # еще нужно удалить из filecache
         query = "DELETE FROM `filecache` WHERE `file_id`='%d' and `multiprocessor_id`='%d'"%(file_id, this);
         db2.db_execute_query(curs, query);
 
-    return 1;
+    query = "UPDATE `files` set `status` = 'error` where `file_id`='%d'"%file_id;
+    db2.db_execute_query(curs, query);
 # Если multi_id == -1 то удалять отовсюду
 # Иначе удалять на указанном суперкомпе(если он там есть)
 def delete_file(curs, ssh, file_id, user_id, multi_id, file_size ):
     DEBUG = global_vars2.DEBUG;
-
+    #Надо удалять только с облака
     if multi_id == -1:
-        return delete_file_everywhere(curs, ssh,file_id, user_id, multi_id, file_size);
+            delete_file_everywhere(curs, ssh, file_id, user_id, multi_id, file_size );
+            return
 
     query = "SELECT `user_on_it`,`host`,`path` from `multiprocessors` where `multiprocessor_id`='%d'"%(multi_id);
     db2.db_execute_query(curs, query);
 
     result = db2.db_fetchall(curs);
-    user_on_mult = result[0][0];
-    host = result[0][1];
-    path = result[0][2];
-
-    if DEBUG:
-        print '[DELETEF] FID %d | UID %d | MID %d | FSIZE %d '%(file_id, user_id, multi_id, file_size);
-        print query;
-        print "[Res] UID %s | HOST %s | Path %s"%(user_on_mult, host, path);
-
-    str_delete = "%s/files/%d"%(path,
-                file_id);
+    user_on_mult = result2[0][0];
+    host = result2[0][1];
+    path = result2[0][2];
 
     # SSH
     if global_vars2.SSH == True:
-        ssh2.ssh_connect(ssh,host, user_on_mult, global_vars2.key_path);
-        sftp = ssh2.sftp_ini(ssh);
-        ssh2.sftp_delete(sftp, str_delete);
-        ssh2.sftp_close(sftp);
-        ssh2.ssh_close(ssh);
+        try:
+            ssh2.ssh_connect(ssh,host, user_on_mult, global_vars2.key_path);
+        except Exception as str:
+            print (str);
 
     if DEBUG:
-        print '[DeleteFile] "%s" END'%str_delete;
+        print ('[DELETEF] FID %d | UID %d | MID %d | FSIZE %d '%(file_id, user_id, multi_id, file_size));
+        print (query);
+        print ("[Res] UID %d | HOST %s | Path %s"%(user_on_mult, host, path));
 
+    string = "rm -f %s@%s:%s/files/%d" %\
+            (
+                user_on_mult,
+			    host,
+			    path,
+                file_id
+            )
+    #status = 0;
+    #status = os.string(string);
+    status = ssh2.ssh_exec(ssh, string);
+
+    if DEBUG:
+        print (string);
+
+    if status:
+        raise "Rm failed(MultiID:%d)"%multi_id;
     # еще нужно удалить из filecache
     query = "DELETE FROM `filecache` WHERE `file_id`='%d' and `multiprocessor_id`='%d'"%(file_id, multi_id);
     db2.db_execute_query(curs, query);
 
 def download_file(curs, ssh, file_id, user_id, multi_id, file_size ):
-    DEBUG = global_vars2.DEBUG;
     query = "SELECT `user_on_it`,`host`,`path`,`files_quota` from `multiprocessors` where `multiprocessor_id`='%d'"%(multi_id);
     db2.db_execute_query(curs, query);
     result = db2.db_fetchall(curs);
@@ -110,21 +124,31 @@ def download_file(curs, ssh, file_id, user_id, multi_id, file_size ):
     path = result[0][2];
     quota = result[0][3];
 
-    file = "%s/%d/%d"%( global_vars2.data_path, user_id, file_id);
-    remote_file = "%s/files/%d"%(path, file_id);
-
-     # SSH
+    # SSH
     if global_vars2.SSH == True:
-        ssh2.ssh_connect(ssh,host, user_on_mult, global_vars2.key_path);
-        sftp = ssh2.sftp_ini(ssh);
-        ssh2.sftp_download(sftp, remote_file,file);
-        ssh2.sftp_close(sftp);
-        ssh2.ssh_close(ssh);
+        try:
+            ssh2.ssh_connect(ssh,host, user_on_mult, global_vars2.key_path);
+        except Exception as str:
+            print (str);
 
-    if DEBUG:
-        print '[DownloadFile] Remote %s | Local %s END'%(remote_file, file);
+    # тут что?
+    string="scp -r %s@%s:%s/files/%d %s/%d/%d" %\
+		(
+			user_on_mult,
+			host,
+			path,
+            file_id,
+			global_vars2.data_path,
+			user_id,
+			file_id
+		)
+    print ("Task upload data: '%s'"%string);
+    # status = os.system(string)
+    #status = 0;
+    status = ssh2.ssh_exec(ssh, string);
 
-    ssh2.sftp_close(sftp);
+    if status:
+        raise "Scp failed"
 
 def transfer_file(curs, ssh, file_id, user_id, multi_id, file_size ):
     DEBUG = global_vars2.DEBUG;
@@ -132,7 +156,7 @@ def transfer_file(curs, ssh, file_id, user_id, multi_id, file_size ):
     db2.db_execute_query(curs, query);
     result = db2.db_fetchall(curs);
 
-    curr_quota = int( filecache.get_files_sum(curs, multi_id) );
+    curr_quota = filecache.get_files_sum(curs, multi_id);
 
     user_on_mult = result[0][0];
     host = result[0][1];
@@ -140,32 +164,41 @@ def transfer_file(curs, ssh, file_id, user_id, multi_id, file_size ):
     quota = result[0][3];
 
     if DEBUG:
-        print '[TransferFile] FID %d | UID %d | MID %d | SIZE %d | CURR_QOUTA %d | QUOTA %d'%(file_id, user_id, multi_id, file_size, curr_quota,quota);
-        print query;
-    
-    if file_size > quota:
-        raise Exception("Error, too big file");
-    
+        print ('[TransferFile] FID %d | UID %d | MID %d | SIZE %d | CURR_QOUTA %s | QUOTA %s'%(file_id, user_id, multi_id, file_size, curr_quota,quota));
+        print (query);
+
+    # SSH
+    if global_vars2.SSH == True:
+        try:
+            ssh2.ssh_connect(ssh,host, user_on_mult, global_vars2.key_path);
+        except Exception as str:
+            print ('[Error]'%str);
+
     if quota - (file_size+curr_quota) < 0:
         filecache.delete_files(curs, ssh, multi_id, quota, file_size,0);
 
-    file = "%s/%d/%d"%( global_vars2.data_path, user_id, file_id);
-    remote_file = "%s/files/%d"%(path, file_id);
+    string="scp %s/%d/%d %s@%s:%s/files/%d" %\
+			(
+				global_vars2.data_path,
+				user_id,
+				file_id,
+				user_on_mult,
+				host,
+				path,
+				file_id
+			)
 
-     # SSH
-    if global_vars2.SSH == True:
-        ssh2.ssh_connect(ssh,host, user_on_mult, global_vars2.key_path);
-        sftp = ssh2.sftp_ini(ssh);
-        ssh2.sftp_transfer(sftp, file, remote_file);
-        ssh2.sftp_close(sftp);
-        ssh2.ssh_close(ssh);
+    print ("Task upload data: '%s'"%string);
+    # status = os.system(string)
+    # status = 0;
 
-    
+    status = ssh2.ssh_exec(ssh, string);
+
+    if status:
+        raise Exception("Scp failed")
 
     if DEBUG:
-        print '[TransferFile] Local %s | Remote %s | End'%(file, remote_file);
-
-    
+        print ('[TransferFile] END');
 
 def lock( curs, oper_id, file_id):
     DEBUG = global_vars2.DEBUG;
@@ -174,7 +207,7 @@ def lock( curs, oper_id, file_id):
     db2.db_execute_query(curs, query);
 
     if DEBUG:
-        print "[Lock] OperId %d | FileID %d | Query:'%s'"%(oper_id,file_id,query);
+        print ("[Lock] OperId %d | FileID %d | Query:'%s'"%(oper_id,file_id,query));
 
     query=\
     """
@@ -189,7 +222,7 @@ def lock( curs, oper_id, file_id):
     db2.db_execute_query(curs, query);
 
     if DEBUG:
-        print "[Lock] Query#2: '%s'"%query;
+        print ("[Lock] Query#2: '%s'"%query);
 
 def unlock( type, err_str, curs, oper_id, file_id):
     
@@ -201,28 +234,25 @@ def unlock( type, err_str, curs, oper_id, file_id):
         update
             operations
         set
-            operations.status = 3
-            
+            operations.status = 3,
+            operations.error_message = '%s'
         where
             operations.operation_id=%d
-    """ %(oper_id);   
+    """ %(err_str,oper_id);   
     else:
-        err_str = str.replace( str(err_str), "'", "\\'");
         query=\
     """
         update
             operations
         set
-            operations.status = 5,
-            operations.error_message = '%s'
+            operations.status = 5
         where
             operations.operation_id=%d
-    """ %(err_str,oper_id);
+    """ %(oper_id);
+    db2.db_execute_query(curs, query);
 
     if DEBUG:
-        print "[UnLock] Type %d | OperId %d | FileID %d | Query:'%s'"%(type,oper_id,file_id,query);
-
-    db2.db_execute_query(curs, query);
+        print ("[Lock] Type %d | OperId %d | FileID %d | Query:'%s'"%(type,oper_id,file_id,query));
 
     query=\
     """
@@ -236,7 +266,7 @@ def unlock( type, err_str, curs, oper_id, file_id):
     db2.db_execute_query(curs, query);
 
     if DEBUG:
-        print "[Unlock] Query#2: '%s'"%query;
+        print ("[Unlock] Query#2: '%s'"%query);
 
 
 

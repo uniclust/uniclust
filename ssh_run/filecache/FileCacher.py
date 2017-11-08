@@ -5,7 +5,6 @@
 #import Backfill
 #import fcntl
 
-import MySQLdb
 import global_vars2
 import sys
 import os
@@ -19,11 +18,12 @@ import filecache
 import ssh2
 import db2
 
+
 error_prefix = "[Error] ";
 
 def start_work():
     if DEBUG:
-        print "[START] Start work at %s"%datetime.datetime.now();
+        print("[START] Start work at %s",datetime.datetime.now());
 
     db_error_flag=False
     try:
@@ -34,13 +34,13 @@ def start_work():
             passwd=global_vars2.db_passwd,
 			db=global_vars2.db_name
             )
-        db2.db_escape_string(db);
-    except:
+    except Exception as str:
         db_error_flag = True;
+        print(str);
 
     if db_error_flag == False:
         if DEBUG:
-            print "Success connect to db"
+            print("Success connect to db")
 
     curs=db2.db_get_cursor(db);
     filecache.check_file_used(curs);
@@ -56,12 +56,10 @@ def start_work():
             operations
         where
             operations.status="new"
-
-        order by operation_id 
     """
 
     if DEBUG:
-        print "Run Query: %s"% query;
+        print("Run Query: %s"% query);
 
     db2.db_execute_query(curs, query);
 
@@ -69,7 +67,7 @@ def start_work():
     num_tasks = len(result);
     
     if DEBUG:
-        print "Num results: %d task(s)"%num_tasks
+        print("Num results: %d task(s)"%num_tasks);
     
     if num_tasks == 0:
         return;
@@ -86,19 +84,19 @@ def start_work():
         error_string = "";
 
         if DEBUG:
-            print "Task:: '%i'"%i
-            print """
+            print("Task:: '%i'"%i);
+            print("""
             OperationID '%d'
             FileID '%d'
             OperType '%s'
             MultiID '%d'
-            """%(oper_id, oper_fileid, oper_type, oper_multi_id);
+            """%(oper_id, oper_fileid, oper_type, oper_multi_id));
 
         query = "SELECT `status`, `user_id`, `size` FROM `files` WHERE `file_id`='%d' LIMIT 1"%(oper_fileid);
         db2.db_execute_query(curs, query);
 
         if DEBUG:
-            print "Query::'%s'"%query;
+            print("Query::'%s'"%query);
 
         result2 = db2.db_fetchall(curs);
 
@@ -107,22 +105,21 @@ def start_work():
         file_size = result2[0][2];
 
         if DEBUG:
-            print "Result File: Status %s | UID %s | SIZE %s"%(file_status, file_userid, file_size);
+            print("Result File: Status %s | UID %s | SIZE %s"%(file_status, file_userid, file_size));
 
-     
         #  Если файл в задании
         if file_status != "ready":
             error = 1;
             error_string = "%sError file status"%error_prefix;
 
             if DEBUG:
-                print "Error Operation, error file status"
+                print("Error Operation, error file status");
 
             continue;
 
         if oper_type == 'copyto':
             if DEBUG:
-                print "Operation::Copyto"
+                print("Operation::Copyto")
             operation.lock(curs,oper_id, oper_fileid);
 
             filecache.pre_add_file_to_cache(curs, oper_fileid, oper_multi_id)
@@ -130,7 +127,7 @@ def start_work():
             try:
                 operation.transfer_file(curs, ssh, oper_fileid, file_userid, oper_multi_id, file_size);
             except Exception as str:
-                print '[ErrorTransfer]:%s'%str;
+                print ('[Error]:%s'%str);
                 error_string = str;
                 error = 1;
 
@@ -143,7 +140,7 @@ def start_work():
             try:
                 operation.download_file(curs, ssh, oper_fileid, file_userid, oper_multi_id, file_size);
             except Exception as str:
-                print 'Error:%s'%str;
+                print ('Error:%s'%str);
                 error_string = str;
                 error = 1;
 
@@ -153,17 +150,7 @@ def start_work():
             try:
                 operation.delete_file(curs, ssh, oper_fileid, file_userid, oper_multi_id, file_size);
             except Exception as str:
-                print 'Error:%s'%str;
-                error_string = str;
-                error = 1;
-
-        if oper_type == 'removeall':
-            operation.lock(curs,oper_id, oper_fileid);
-
-            try:
-                operation.delete_file_everywhere(curs, ssh, oper_fileid, file_userid, oper_multi_id, file_size);
-            except Exception as str:
-                print 'Error:%s'%str;
+                print ('Error:%s'%str);
                 error_string = str;
                 error = 1;
 
@@ -171,9 +158,8 @@ def start_work():
 
     ssh2.ssh_close(ssh);
     if DEBUG:
-        print "[END] Start work...";
-   
-start_work();    
-#while 1:
-#    start_work();
-#    time.sleep(60); 
+        print("[END] Start work...");
+        
+while 1:
+    start_work();
+    time.sleep(60); 
