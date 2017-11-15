@@ -1,6 +1,10 @@
 import pymysql as sql
-from db_classes import cl_file as class_files, cl_multi as class_multiproc, cl_operation as class_operations,\
+from uniclust.db_classes import cl_file as class_files, cl_multi as class_multiproc, cl_operation as class_operations,\
                         cl_filecache as class_filecache, cl_tasks as class_tasks, cl_tasksfiles as class_tasksfiles
+
+import uniclust.ssh2
+import uniclust.filecache_globalvars as global_vars2
+import datetime
 
 class Db_connection(object):
     def    __init__(self, host, user, passwd, db):
@@ -12,11 +16,12 @@ class Db_connection(object):
         self.error = False
         self.error_message = '';
 
-        self.debug = False;
+        self.debug = True;
         try:
             self.db = sql.connect(host, user, passwd, db);
         except sql.InternalError as str:
             print(str.args);
+            return False;
     
         self.curs = self.db.cursor();
     def execute_query( self, query ):
@@ -25,11 +30,11 @@ class Db_connection(object):
     def fetchall(self):
         return self.curs.fetchall();
 
-    def query_get_all_new_operations(self):
+    def get_all_new_operations(self, test = False):
         """
         Select all operations that has status 'new' and return class operations
         """
-        query= "SELECT * FROM `operations` ORDER BY `operation_id` ";
+        query= "SELECT * FROM `operations` ORDER BY `operation_id` " if test is True else "SELECT * FROM `operations` where `status` = 'new' ORDER BY `operation_id`  ";
         if self.debug:
             print(query);
 
@@ -42,10 +47,11 @@ class Db_connection(object):
                 lst.append(class_operations(obj))
 
             return lst;
+        
+        # No exception
+        return False;
 
-        raise Exception("[{}]Empty Result...".format(query_get_all_new_operations.__name__));
-
-    def query_info_by_fileid(self, file_id):
+    def get_info_file(self, file_id):
         """
         Return `cl_file` python class
         """
@@ -61,8 +67,8 @@ class Db_connection(object):
         if len(result):
             return class_files(result[0]);
 
-        raise Exception("[{}]Empty Result...".format(query_info_by_fileid.__name__));
-    def query_set_file_status(self, file_id, status="error"):
+        raise Exception("[{}]Empty Result...".format(self.get_info_file.__name__));
+    def set_file_status(self, file_id, status="error"):
         """
             Function take file_id, status and update table files
         """
@@ -73,7 +79,7 @@ class Db_connection(object):
         result =self.execute_query(query);
 
         return True;
-    def query_lock_operation(self, cl_oper, error=None):
+    def lock_operation(self, cl_oper, error=None):
         """
         Lock/Unlock операцию. Принимает минимум 1 аргумент ввиде 
         cl_oper=class_operation 
@@ -85,9 +91,10 @@ class Db_connection(object):
 
         RUNNING_STATUS = 2;
 
+        arg = cl_oper;
         if error is None:
-            arg = cl_oper
-            query = "UPDATE `operations` SET `status`=%d WHERE `operation_id`='%d'; UPDATE `files` set `status` = 2 WHERE file_id = %d"%(RUNNING_STATUS,arg.oper_id, arg.file_id);
+            
+            query = "UPDATE `operations` SET `status`='running' WHERE `operation_id`='%d'; UPDATE `files` set `status` ='processing' WHERE file_id = %d"%(arg.oper_id, arg.file_id);
             self.execute_query(query);
 
             if self.debug:
@@ -96,10 +103,17 @@ class Db_connection(object):
             return;
 
         arg2 = error;
-        query = "UPDATE `operations` SET `status`=%d, `error_message`='%s' WHERE operation_id`='%d';\
-                UPDATE `files` SET `status`='ready' WHERE `file_id`=%d" % ( 3 if not len(arg2) else 5, arg2, arg.oper_id, arg.file_id);
+        print('[Error] [{}]'.format(arg2));
+        if len(arg2) and self.debug:
+            print('[Error] %s' % arg2);
 
-    def query_info_by_multiid( self, multi_id):
+        query = "UPDATE `operations` SET `status`='%s', `error_message`='%s' WHERE `operation_id`='%d'; UPDATE `files` SET `status`='ready' WHERE `file_id`=%d" % ( 'finished' if len(arg2) == 0 else 'error', arg2, arg.oper_id, arg.file_id);
+        self.execute_query(query);
+
+        if self.debug:
+            print (query);
+
+    def get_info_multiproc( self, multi_id):
             """
             Take multiproccessor id and return `cl_multi` python class
             """
@@ -114,13 +128,20 @@ class Db_connection(object):
             if len(result):
                 return class_multiproc(result[0]);
 
-            raise Exception("[{}]Empty Result...".format(query_info_by_multiid.__name__));
+            raise Exception("[{}]Empty Result...".format(self.get_info_multiproc.__name__));
 
-    def query_delete_from_filecache(self, file_id, multi_id):
+    def delete_from_filecache(self, file_id, multi_id):
             """
-            Function take file_id and multiproccessor id and delete item from table filecache
+            Function take file_id and multiprocessor id and delete item from table filecache
             """
-            query = "DELETE FROM `filecache` WHERE `file_id`='%d' and `multiprocessor_id`='%d'"%(file_id, multi_id);
+
+            qstr = '';
+            for item in file_id:
+                qstr += "`file_id` = '%d' OR " % item;
+
+            qstr = qstr[:-4];
+
+            query = "DELETE FROM `filecache` WHERE (%s) and `multiprocessor_id`='%d'"%(qstr, multi_id);
             if self.debug:
                 print(query);
 
@@ -128,7 +149,7 @@ class Db_connection(object):
 
             return True;
 
-    def query_filecache_by_id(self, multi_id = None, file_id = None, file_status = None, sorted = False):
+    def get_filecache_by_id(self, multi_id = None, file_id = None, status = None, sorted = False):
             """
             Return `cl_filecache` python class
             multi_id : multiproccessor_id
@@ -138,11 +159,11 @@ class Db_connection(object):
             """
 
             need_sort = "ORDER BY (`read_counter` and `write_counter`) ASC" if sorted else "";
-            with_status = " AND `status` = '{}'".format(file_status) if file_status is not None else "";
+            with_status = " AND `status` = '{}'".format(status) if status is not None else "";
             by_multi_id = "`multiprocessor_id`='{}' ".format(multi_id) if multi_id is not None else "";
             by_file_id = "`file_id`='{}' ".format(file_id) if file_id is not None else "";
 
-            query = "SELECT * from `filecache` where %s %s %s %s"%(by_multi_id, by_file_id, with_status, need_sort);
+            query = "SELECT * from `filecache` where {} {} {} {}".format(by_multi_id, by_file_id, with_status, need_sort);
             if self.debug:
                 print(query);
 
@@ -156,22 +177,27 @@ class Db_connection(object):
 
                 return lst;
 
-            raise Exception("[{}]Empty Result...".format(query_filecache_by_id.__name__));
+            return False;
 
-    def query_filecache_sum(self, list_files):
+    def get_filecache_sum(self, list_files):
             """
             Return size of files by list that contains file_id
             """
 
-            str = '';
+            if len(list_files) == 0:
+                return 0;
+
+            lst = list();
 
             for file_id in list_files:
-                str += " `file_id` = '%d' "%(file_id);
+                lst.append("`file_id` = '{}'".format(file_id));
 
-            if not len(str):
+            string = ' OR '.join(lst);
+
+            if len(string) < 6:
                 return False;
 
-            query = "SELECT SUM(size) FROM `files` WHERE (%s)"%(str);
+            query = "SELECT SUM(size) FROM `files` WHERE (%s)"%(string);
             if self.debug:
                 print(query);
 
@@ -181,9 +207,9 @@ class Db_connection(object):
             if len(result):
                 return result[0][0];
 
-            raise Exception("[{}]Empty Result...".format(query_filecache_sum.__name__));
+            raise Exception("[{}]Empty Result...".format(self.get_filecache_sum.__name__));
 
-    def query_filecache_update(self, fid, mid, **kwargs):
+    def filecache_update(self, fid, mid, **kwargs):
             """
             update table filecache 
             mid : multiproccessor_id
@@ -194,22 +220,22 @@ class Db_connection(object):
             """
 
             if not len(kwargs):
-                raise Exception("[{}]Empty args...".format(query_filecache_update.__name__));
+                raise Exception("[{}]Empty args...".format(self.filecache_update.__name__));
 
             lst = list();
             for value, key in kwargs.items():
-                lst.append("`"+value+"`='"+key+"'") if key != '+' else lst.append("`"+value+"`=`"+value+"` + 1");
+                lst.append("`{}`='{}'".format(value, key)) if key != '+' else lst.append("`{}`=`{}` + 1".format(value, value));
 
-            str = ', '.join(lst);
+            qstr = ', '.join(lst);
 
-            query = "UPDATE `filecache` SET %s WHERE `file_id`='%d' and `multiproccessor_id`='%d'"%(str, fid, mid);
+            query = "UPDATE `filecache` SET %s WHERE `file_id`='%d' and `multiprocessor_id`='%d'"%(qstr, fid, mid);
             if self.debug:
                 print(query);
 
             result = self.execute_query(query);
 
             return True;
-    def query_add_to_filecache(self, **params):
+    def add_to_filecache(self, **params):
             """
             Insert into table filecache
             **params : field in table filecache 
@@ -217,13 +243,13 @@ class Db_connection(object):
             Example query_add_to_filecache( file_id="1", write_counter="5" )
             """
             if not len(params):
-                raise Exception("[{}]Empty args...".format(query_add_to_filecache.__name__));
+                raise Exception("[{}]Empty args...".format(self.add_to_filecache.__name__));
 
             lst_1 = list();
             lst_2 = list();
             for value, key in params.items():
-                lst_1.append("`"+value+"`");
-                lst_2.append("'"+key+"'");
+                lst_1.append("`{}`".format(value));
+                lst_2.append("'{}'".format(key));
 
             str_values = ','.join(lst_1);
             str_keys = ','.join(lst_2);
@@ -251,7 +277,7 @@ class Db_connection(object):
             if len(result):
                 return class_tasks(result[0]);
 
-            raise Exception("[{}]Empty Result...".format(get_info_tasks_by_taskid.__name__));
+            raise Exception("[{}]Empty Result...".format(self.get_info_tasks_by_taskid.__name__));
 
     def get_info_tasksfiles_by_params(self, **params):
             """
@@ -262,9 +288,9 @@ class Db_connection(object):
 
             lst = list();
             for value, key in params.items():
-                lst.append("`"+value+"`='"+key+"'");
+                lst.append("`{}`='{}'".format(value, key));
 
-            str = ', '.join(lst);
+            str = ' AND '.join(lst);
 
             query= "SELECT * FROM `tasks_files` WHERE %s"%str;
             if self.debug:
@@ -280,7 +306,7 @@ class Db_connection(object):
 
                 return lst;
 
-            raise Exception("[{}]Empty Result...".format(get_info_taskfiles_by_params.__name__));
+            return False;
     
     def update_taskfiles_by_tid_and_fid(self, task_id, file_id, **params):
             """
@@ -291,12 +317,13 @@ class Db_connection(object):
 
             lst = list();
             for value, key in params.items():
-                lst.append("`"+value+"`='"+key+"'");
+                lst.append("`{}`='{}'".format(value, key));
 
-            str = ', '.join(lst);
+            qstr = ', '.join(lst);
 
-            query= "UPDATE `tasks_files` SET %s WHERE `task_id`='%d' AND `file_id`='%d'"%str,task_id,file_id;
+            query= "UPDATE `tasks_files` SET {} WHERE `task_id`='{}' AND `file_id`='{}'".format(qstr, task_id, file_id);
             if self.debug:
                 print(query);
 
             result = self.execute_query(query);
+

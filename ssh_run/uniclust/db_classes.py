@@ -9,8 +9,8 @@ class db_classes(object):
 class cl_multi(db_classes):
     """Obj of multiproccessor class"""
     def __init__(self,  multi_obj ):
-        self.multiproccessor_id =       multi_obj[0];
-        self.multiproccessor_name =     multi_obj[1];
+        self.multiprocessor_id =       multi_obj[0];
+        self.multiprocessor_name =     multi_obj[1];
         self.path =                     multi_obj[2];
         self.user_on_it =               multi_obj[3];
         self.host =                     multi_obj[4];

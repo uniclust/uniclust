@@ -6,37 +6,67 @@ import paramiko
 SSH_USE = False;
 SSH_DEBUG = True;
 
-def ssh_client():
-    if SSH_USE == False:
-        return 0;
+class ssh_connections(object):
 
-    return paramiko.SSHClient();
+    enableSSH = False;
+    debugSSH = True;
 
-def ssh_connect( ssh, host_name, user_name, key_path ):
-    if SSH_USE == False:
-        return 0;
+    def __init__(self, connect = False, host_name = None, user_name = None, key_path = None):
+        """
+        Create SSH Obj
+        If you want connect at once, set param connect to True
+        """
+        if self.enableSSH is False:
+            return
 
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy());
-    return ssh.connect( hostname= host_name,\
+        host = host_name;
+        user = user_name;
+        key = key_path;
+
+        ssh = paramiko.SSHClient();
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy());
+
+        if connect:
+            self.connect();
+
+    def connect(host_name = None, user_name = None, key_path = None):
+        """
+        Create SSH connection
+        If run without any param, use default params to connect
+        Return true if all OK
+        Return string error value when except an error
+        """
+
+        if self.enableSSH is False:
+            return
+
+        try:
+            ssh.connect( hostname= host_name,\
                  username = user_name,\
-                 key_filename = key_path);
+                 key_filename = key_path) if host_name is not None else \
+            ssh.connect( hostname= self.host,\
+                 username = self.user,\
+                 key_filename = self.key)
+        except Exception as error:
+            return error;
 
-def ssh_exec( ssh, command ):
-    if SSH_USE == False:
+        return True;
 
-        if SSH_DEBUG:
-            print (command);
+    def exec(self, command):
+        """
+        Exec ssh command, and return error value > 0
+        """
+        if self.enableSSH is False:
+            return
 
-        return 0;
+        stdin,stdout, stderr = self.ssh.exec_command( command );
+        if self.debugSSH:
+            print(stdout.readlines());
 
-    stdin,stdout, stderr = ssh.exec_command( command );
-    if SSH_DEBUG:
-        print (stdout.readlines());
+        return stderr;
 
-    return stderr;
+    def close(self):
+        if self.enableSSH is False:
+            return
 
-def ssh_close( ssh ):
-    if SSH_USE == False:
-        return 0;
-
-    ssh.close();
+        ssh.close();
