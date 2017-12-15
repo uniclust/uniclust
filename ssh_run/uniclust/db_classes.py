@@ -47,12 +47,6 @@ class cl_filecache(db_classes):
         self.last_read =            filecache_object[6];
         self.last_write =           filecache_object[7];
 
-class cl_tasks(db_classes):
-    """Obj of tasks class"""
-    def __init__(self,  task_obj ):
-        self.task_id =                  task_obj[0];
-        self.multiprocessor_id =        task_obj[1];
-
 class cl_tasksfiles(db_classes):
     """description of class"""
     def __init__(self,  task_object ):

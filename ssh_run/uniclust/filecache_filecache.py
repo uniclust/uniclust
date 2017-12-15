@@ -9,7 +9,6 @@
 
 from uniclust import filecache_globalvars as global_vars2
 from uniclust import ssh2
-from uniclust import filecache_db2 as db2
 
 import datetime
 

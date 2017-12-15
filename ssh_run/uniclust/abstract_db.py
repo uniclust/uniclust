@@ -1,13 +1,17 @@
 import pymysql as sql
 from uniclust.db_classes import cl_file as class_files, cl_multi as class_multiproc, cl_operation as class_operations,\
-                        cl_filecache as class_filecache, cl_tasks as class_tasks, cl_tasksfiles as class_tasksfiles
+                        cl_filecache as class_filecache
+
+from uniclust.task import Task as class_tasks
 
 import uniclust.ssh2
 import uniclust.filecache_globalvars as global_vars2
 import datetime
 
+from uniclust.task import *
+
 class Db_connection(object):
-    def    __init__(self, host, user, passwd, db):
+    def    __init__(self, host : str, user : str, passwd : str, db : str, key= None):
         """
         Creating database object and connecting it to
         really database
@@ -17,11 +21,20 @@ class Db_connection(object):
         self.error_message = '';
 
         self.debug = True;
+
+        if key is not None:
+            passFile = open(key, 'r');
+            passwd = passFile.read();
+            passwd = passwd.strip();
+
+            if len(passwd) < 3:
+                raise Exception("Invalid passwd from file...");
+
+
         try:
             self.db = sql.connect(host, user, passwd, db);
         except sql.InternalError as str:
-            print(str.args);
-            return False;
+            raise Exception(str.args);
     
         self.curs = self.db.cursor();
     def execute_query( self, query ):
@@ -30,6 +43,58 @@ class Db_connection(object):
     def fetchall(self):
         return self.curs.fetchall();
 
+    def get_all_tasks(self):
+        """
+        Get all tasks from db table `tasks`, return [list] class task (see db_classes.py for details)
+        """
+        query= "SELECT * FROM `tasks` WHERE 1"
+
+        if self.debug:
+            print(query);
+
+        result = self.execute_query(query);
+        result = self.fetchall()
+
+        lst = list();
+        if len(result):
+            for obj in result:
+                lst.append(Task(obj, self))
+
+            return lst;
+
+        return False
+    def set_task_status(self, task_id, status):
+        """
+        Set a 'status' to task by `task_id`
+        """
+
+        query = "update tasks set task_status='{}' where task_id={}".format(status, task_id);
+
+        if self.debug:
+            print(query);
+
+        self.execute_query(query);
+
+    def get_algoritm(self, app_id):
+        """
+        select algoritm from app
+        """
+        query= "SELECT * FROM `applications` WHERE `application_id`='%d'"%app_id;
+
+        if self.debug:
+            print(query);
+
+        result = self.execute_query(query);
+        result = self.fetchall()
+
+        lst = list();
+        if len(result):
+            for obj in result:
+                lst.append(class_tasks(obj))
+
+            return lst;
+
+        return False
     def get_all_new_operations(self, test = False):
         """
         Select all operations that has status 'new' and return class operations

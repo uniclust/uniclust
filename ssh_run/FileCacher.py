@@ -21,15 +21,10 @@ DEBUG = True;
 error_prefix = "[Error] ";
 
 
-def start_work():
+def start_work( db ):
 
     if DEBUG:
         print("[START] Start work at %s",datetime.datetime.now());
-
-    db = database.Db_connection(host="s08.host-food.ru",
-                   user="h91184_revka",
-                   passwd="Dd3051540",
-                   db="h91184_cs-suite");
 
     if db is False:
         print("Error while conn with DB");
@@ -38,7 +33,7 @@ def start_work():
     filecache.check_file_used(db);
     result = db.get_all_new_operations(False);
 
-    if not len(result):
+    if result is False:
         return;
 
     for item in result:
@@ -76,7 +71,3 @@ def start_work():
 
     if DEBUG:
         print("[END] Start work...");
-        
-while 1:
-    start_work();
-    time.sleep(60); 

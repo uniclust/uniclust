@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-import fcntl
+#import fcntl
 import argparse
 
-from pwd import getpwnam
+#from pwd import getpwnam
+
+test = True;
 
 def parse_config_file(config_file_name="/etc/uniclust/uniclust.conf"):
     """
@@ -14,7 +16,11 @@ def parse_config_file(config_file_name="/etc/uniclust/uniclust.conf"):
     If some parameters skip in config file then it is 
     assigned by default.
     """
-    f=open(conffilename,"r")
+
+    if test:
+        return;
+
+    f=open(config_file_name,"r")
     
     config=dict()
     
@@ -68,31 +74,34 @@ def become_daemon(config,really_become = True):
     """
     Move server into the daemon mode.
     """
+    if test:
+        return;
+
     # privileges
-    goal_uid=getpwnam(config['user']).pw_uid
-    goal_gid=getpwnam(config['group']).pw_gid
+    #goal_uid=getpwnam(config['user']).pw_uid
+    #goal_gid=getpwnam(config['group']).pw_gid
     
     try:
-        f=os.open(config['lock_file'],os.O_CREAT|os.O_WRONLY|os.O_SYNC, 0600)
-        fcntl.flock(f,fcntl.LOCK_EX | fcntl.LOCK_NB)
+        f=os.open(config['lock_file'],os.O_CREAT|os.O_WRONLY|os.O_SYNC, 777)
+        #fcntl.flock(f,fcntl.LOCK_EX | fcntl.LOCK_NB)
     except Exception as s:
-        print "Сhecking server lock... Fail!"
-        print "Try to delete the locking file '%s' manually" % (config['lock_file'])
-        print "Reasoning is: %s" % (s)
+        print ("Сhecking server lock... Fail!")
+        print ("Try to delete the locking file '%s' manually" % (config['lock_file']))
+        print ("Reasoning is: %s" % (s))
         sys.exit(1)
     
-    print "Сhecking server lock... OK!"
+    print ("Сhecking server lock... OK!")
 
     if really_become == False:
         if os.geteuid() != goal_uid :
-            print "warning: effective user id is not equal id for '%s'" % (config['user'])
+            print ("warning: effective user id is not equal id for '%s'" % (config['user']))
         if os.getegid() != goal_gid :
-            print "warning: effective group id is not equal id for '%s'" % (config['group'])
+            print ("warning: effective group id is not equal id for '%s'" % (config['group']))
         return
     
     if os.geteuid()!= 0:
-        print "Sorry, you need root privilegies to run it as daemon"
-        sys.exit(1)
+        print ("Sorry, you need root privilegies to run it as daemon")
+        #sys.exit(1)
     
     #
     # Do first fork
@@ -102,7 +111,7 @@ def become_daemon(config,really_become = True):
         if pid > 0:
                 # exit first parent
                 sys.exit(0)
-    except OSError, e:
+    except OSError as e:
         sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
         sys.exit(1)
     
@@ -122,7 +131,7 @@ def become_daemon(config,really_become = True):
         if pid > 0:
             # exit from second parent
             sys.exit(0)
-    except OSError, e:
+    except OSError as e:
         sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
         sys.exit(1)
     
@@ -167,7 +176,7 @@ def parse_arguments(argv):
     Parsing arguments for server
     """
     parser = argparse.ArgumentParser(
-            description=_("""
+            description=("""
              This program is server for running users tasks on several
              supercomputers. For details see:
              https://github.com/uniclust
@@ -179,7 +188,7 @@ def parse_arguments(argv):
             '--config',
             dest='config_file_name',
             required=False,
-            help=_('Name of config file'),
+            help=('Name of config file'),
             default="/etc/uniclust/uniclust.conf"
     )
     
@@ -188,8 +197,8 @@ def parse_arguments(argv):
             dest='become_daemon',
             required=False,
             choices= [ 'yes', 'no' ],
-            default='yes'
-            help=_('Run not in daemon mode')
+            default='yes',
+            help=('Run not in daemon mode')
     )
 
     args = parser.parse_args()

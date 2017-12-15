@@ -19,12 +19,12 @@ class ssh_connections(object):
         if self.enableSSH is False:
             return
 
-        host = host_name;
-        user = user_name;
-        key = key_path;
+        self.host = host_name;
+        self.user = user_name;
+        self.key = key_path;
 
-        ssh = paramiko.SSHClient();
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy());
+        self.ssh = paramiko.SSHClient();
+        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy());
 
         if connect:
             self.connect();
