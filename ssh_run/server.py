@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import MySQLdb
 import global_vars
 import task
 import sys
@@ -10,11 +9,8 @@ import datetime
 import Backfill
 import time
 import fcntl
-import filecache/PythonApplication3
-import filecache/db2
 
-from uniclust import *
-
+from uniclust import abstract_db as db
 
 flag=True
 #os.unlink(global_vars.lock_path)
@@ -51,22 +47,23 @@ os.setuid(getpwnam(config['user']).pw_uid)
 os.setgid(getpwnam(config['user']).pw_gid)
 
 try:
-	f=os.open(global_vars.lock_path,os.O_CREAT|os.O_WRONLY|os.O_SYNC, 0600)
+	f=os.open(global_vars.lock_path,os.O_CREAT|os.O_WRONLY|os.O_SYNC, 777)
 	#f = open(global_vars.lock_path, "w")
 	#pid = str(os.getpid())
 	#f.write("%s\n" %pid)
 	fcntl.flock(f,fcntl.LOCK_EX | fcntl.LOCK_NB)
 except Exception as s:
-	print s
+	print (s)
 	flag=False
 
 if flag==False:
-	print "Сhecking server lock... Fail! Try to delete the locking file manually"
-	print "-------------------------"
+	print ("Сhecking server lock... Fail! Try to delete the locking file manually")
+	print ("-------------------------")
 	#os.close(f)
 	#f.close()
-	sys.exit(1)
-print "Сhecking server lock... OK!"
+	#sys.exit(1)
+
+print("Сhecking server lock... OK!")
 
 
 #sys.stdout.write("Success!")
@@ -75,9 +72,9 @@ try:
 	if pid > 0:
 		# exit first parent
 		sys.exit(0)
-except OSError, e:
+except OSError as e:
 	sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
-	sys.exit(1)
+	#sys.exit(1)
 # write pid file
 pidfile = file(config['pidfile'], 'w')
 pidfile.write(str(pid))
@@ -92,7 +89,7 @@ try:
 	if pid > 0:
 		# exit from second parent
 		sys.exit(0)
-except OSError, e:
+except OSError as e:
 	sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
 	sys.exit(1)
 sys.stdout.write("Success!")
@@ -114,7 +111,6 @@ pid = str(os.getpid())
 #f.write("%s\n" %pid)
 os.write(f, "%s\n" %pid)
 #f.flush()
-
 
 #
 # get current date and time (without microseconds)
@@ -154,8 +150,8 @@ while 1:
 		db_error_flag=True
 		
 	if db_error_flag:
-		print "Couldn't connect to the database!"
-		print "-------------------------"
+		print ("Couldn't connect to the database!")
+		print ("-------------------------")
 		if flag:
 			os.unlink(global_vars.lock_path)
 		sys.exit(1)
@@ -166,10 +162,10 @@ while 1:
 	#pid = str(os.getpid())
 	#f.write("%s\n" %pid)
 	#f.close()
-
-
 	curs=db2.db_get_cursor(db)
 	
+
+    #Хрень
 
 	current_date=datetime.date.today()
 	delta_time=datetime.timedelta(hours=24)
@@ -181,12 +177,10 @@ while 1:
 	#print current_date
 	#print expire_date
 
-
-
 	query="delete from hash where date_label < '%s'" %expire_date
 	db2.db_execute_query(curs, query);
 	
-
+    #Хрень
 	query=\
 	"""
 		select
@@ -232,8 +226,8 @@ while 1:
 		#
 		tsk=task.Task(result[i])
 
-		print "  task %d %d:" %(i, tsk.task_id)
-
+		print ("  task %d %d:" %(i, tsk.task_id))
+        #Хрень
 		query=\
 		"""
 			select
@@ -263,13 +257,13 @@ while 1:
 			try:
 				tsk.upload_data()
 			except:
-				print "    Upload data for task %d failed!" %tsk.task_id
+				print ("    Upload data for task %d failed!" %tsk.task_id)
 				query="update tasks set task_status='stopped', priority_max=1005 where task_id=%d" %tsk.task_id
 				db2.db_execute_query(curs, query);
 				continue
 			status=tsk.run()
 			if status:
-				print "    Run task %d failed!" %tsk.task_id
+				print ("    Run task %d failed!" %tsk.task_id)
 				query="update tasks set task_status='stopped', priority_max=1010 where task_id=%d" %tsk.task_id
 				db2.db_execute_query(curs, query);
 				continue
@@ -285,7 +279,7 @@ while 1:
 			try:
 				tsk.download_data()
 			except:
-				print "    Download data failed!"
+				print ("    Download data failed!")
 			tsk.remote_task_delete()
 			query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
 			db2.db_execute_query(curs, query);
@@ -298,7 +292,7 @@ while 1:
 		#
 		if tsk.task_status=="submitted":
 			status=tsk.check()
-			print "    Task check: %d" %status
+			print ("    Task check: %d" %status)
 			
 			if status==0:
 				tsk.clear_remote_data()
@@ -320,7 +314,7 @@ while 1:
 				tsk.download_data()
 				tsk.remote_task_delete()
 			except:
-				print "    TASK ERROR!!"
+				print ("    TASK ERROR!!")
 			
 			query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
 			db2.db_execute_query(curs, query);
@@ -473,7 +467,7 @@ while 1:
 			try:
 				tsk.download_data()
 			except:
-				print "    Download data failed!"
+				print ("    Download data failed!")
 			tsk.remote_task_delete()
 			query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
 			db2.db_execute_query(curs, query);
@@ -514,7 +508,7 @@ while 1:
 			try:
 				StopTaskList[i].download_data()
 			except:
-				print "    Download data failed!"
+				print ("    Download data failed!")
 			StopTaskList[i].remote_task_delete()
 			query="update tasks set task_status='refused' where task_id=%d" %StopTaskList[i].task_id
 			db2.db_execute_query(curs, query);
@@ -529,7 +523,7 @@ while 1:
 		for i in range (0, len(RunTaskList)):
 			
 			status=RunTaskList[i].check()
-			print "    Task check: %d" %status
+			print ("    Task check: %d" %status)
 			
 			if status==0:
 				RunTaskList[i].clear_remote_data()
@@ -553,7 +547,7 @@ while 1:
 		for i in range (0, len(SbmTaskList)):
 			
 			status=SbmTaskList[i].check()
-			print "    Task check: %d" %status
+			print ("    Task check: %d" %status)
 			
 			if status==0:
 				SbmTaskList[i].clear_remote_data()
@@ -578,7 +572,7 @@ while 1:
 				SbmTaskList[i].download_data()
 				SbmTaskList[i].remote_task_delete()
 			except:
-				print "    TASK ERROR!!"
+				print ("    TASK ERROR!!")
 			
 			query="update tasks set task_status='refused' where task_id=%d" %SbmTaskList[i].task_id
 			db2.db_execute_query(curs, query);
@@ -613,13 +607,13 @@ while 1:
 				try:
 					NqTaskList[i].upload_data()
 				except:
-					print "    Upload data for task %d failed!" %NqTaskList[i].task_id
+					print ("    Upload data for task %d failed!" %NqTaskList[i].task_id)
 					query="update tasks set task_status='stopped', priority_max=1005 where task_id=%d" %NqTaskList[i].task_id
 					db2.db_execute_query(curs, query);
 					continue
 				status=NqTaskList[i].run()
 				if status:
-					print "    Run task %d failed!" %NqTaskList[i].task_id
+					print ("    Run task %d failed!" %NqTaskList[i].task_id)
 					query="update tasks set task_status='stopped', priority_max=1010 where task_id=%d" %NqTaskList[i].task_id
 					db2.db_execute_query(curs, query);
 					continue
@@ -692,7 +686,7 @@ while 1:
 		result=db2.db_fetchall(curs)
 		num_tasks=len(result)
 		
-		print "\tnumber of tasks on multiproc with ID %d is %d" %(mult_id, num_tasks)
+		print ("\tnumber of tasks on multiproc with ID %d is %d" %(mult_id, num_tasks))
 		
 		for i in range(0,num_tasks):
 
@@ -718,7 +712,7 @@ while 1:
 				try:
 					tsk.download_data()
 				except:
-					print "    Download data failed!"
+					print ("    Download data failed!")
 				tsk.remote_task_delete()
 				query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
 				db2.db_execute_query(curs, query);
@@ -732,7 +726,7 @@ while 1:
 			#
 			if (tsk.task_status=="submitted") or (tsk.task_status=="running"):
 				status=tsk.check()
-				print "Task check: %d" %status
+				print ("Task check: %d" %status)
 				
 				if status==0:
 					tsk.clear_remote_data()
@@ -771,9 +765,9 @@ while 1:
 					tsk.download_data()
 					tsk.remote_task_delete()
 				except:
-					print "   ##Error##"
-				print "    !!!!!!!!REFUSED!!!!!!!!!!"
-				print status
+					print ("   ##Error##")
+				print ("    !!!!!!!!REFUSED!!!!!!!!!!")
+				print (status)
 				query="update tasks set task_status='refused' where task_id=%d" %tsk.task_id
 				db2.db_execute_query(curs, query);
 				tsk.email_notify_on_finish("refused")
@@ -797,22 +791,22 @@ while 1:
 			db2.db_execute_query(curs, query);
 			if Tasks[1]<global_vars.timeout_server:
 				if tsklist[Tasks[0]].task_id not in SubTaskId:
-					print "subtasks"
-					print SubTaskId
-					print "task id"
-					print Tasks[0]
-					print tsklist[Tasks[0]].task_id
+					print ("subtasks")
+					print (SubTaskId)
+					print ("task id")
+					print (Tasks[0])
+					print (tsklist[Tasks[0]].task_id)
 					tsk=tsklist[Tasks[0]]
 					try:
 						tsk.upload_data()
 					except:
-						print "    Upload data for task %d failed!" %tsk.task_id
+						print ("    Upload data for task %d failed!" %tsk.task_id)
 						query="update tasks set task_status='stopped',priority_max=1005 where task_id=%d" %tsk.task_id
 						db2.db_execute_query(curs, query);
 						continue
 					status=tsk.run()
 					if status:
-						print "    Run task %d failed!" %tsk.task_id
+						print ("    Run task %d failed!" %tsk.task_id)
 						query="update tasks set task_status='stopped' ,priority_max=1010 where task_id=%d" %tsk.task_id
 						db2.db_execute_query(curs, query);
 						continue
@@ -833,8 +827,7 @@ while 1:
 					db2.db_execute_query(curs, query);
 					
 	time.sleep(60)			
-print "Server ends successfully!"
-print "-------------------------"
+print ("Server ends successfully!")
 
 
 os.unlink(global_vars.lock_path)
@@ -866,11 +859,11 @@ def main(argv=None):
     try:
         db=abstract_db(config)
         if db == None:
-           sys.stderr.write(_("Database connection failed")
+           sys.stderr.write("Database connection failed")
            return 1
 
     while True:
-            
+            time.sleep(10);
 
 
 

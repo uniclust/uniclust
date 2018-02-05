@@ -20,7 +20,6 @@ from uniclust import abstract_db as database
 DEBUG = True;
 error_prefix = "[Error] ";
 
-
 def start_work( db ):
 
     if DEBUG:

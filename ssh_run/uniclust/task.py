@@ -78,6 +78,22 @@ class Task(object):
         if status:
             raise Exception("Error with scp string");
 
+    def check(self):
+        string="ssh %s@%s \"cd %s; ./scheduler_check_align.sh %d '%s'\"" %\
+		(
+			self.multi.user_on_mult,
+			self.multi.host,
+			self.multi.path,
+			self.task_id,
+			self.app.name if self.app is not False else ''
+		)
+        
+        if self.debug:
+            print (string)
+            
+        status = self.ssh.exec(string);
+        print ("    Task.check(): status length = %d" % status)
+        return status
     def download_data(self):
         ...
 

@@ -41,6 +41,7 @@ class Task:
 			self.seq_simil_thrshld     = db_row[2]
 	
 	def upload_data(self):
+        #Хрень
 		if self.algorithm == "FitProt":
 			run_fitprot="cd %s/%d/%d; /home/romanenkov/fitprot/search_substs.py -p %s/%d/%d/structure.pdb -s %s/%d/%d/selection.txt -o %s/%d/%d/tmp > /home/romanenkov/aligner/ssh_run/fit_log.txt; scp %s/%d/%d/energy_array %s@%s:%s/%d.en" %\
 			(
@@ -70,7 +71,7 @@ class Task:
 			#	run_fitprot
 			#)
 			#os.system(test)
-			print run_fitprot
+			print (run_fitprot)
 			os.system(run_fitprot)
 			#string4="scp %s/%d/%d/energy_array %s@%s:%s/energy_array" %\
 			#(
@@ -103,9 +104,9 @@ class Task:
 				self.task_id
 			)
 
-			print "    Task.upload_data(): %s" %string1
+			print ("    Task.upload_data(): %s" %string1)
 			status1=os.system(string1)
-			print "    Task.upload_data(): %s" %string2
+			print ("    Task.upload_data(): %s" %string2)
 			status2=os.system(string2)
 
 			if status1 or status2:
@@ -133,7 +134,7 @@ class Task:
 			#print status3
 			#if status3:
 			#	raise Task_exception("11scp failed!11")
-			print "1 done"
+			print ("1 done")
 			string1="scp %s/%d/%d/sequences.fasta %s@%s:%s/%d.fasta" %\
 			(
 				global_vars.data_path,
@@ -144,8 +145,8 @@ class Task:
 				self.path,
 				self.task_id
 			)
-			print "ready1"
-			print "    Task.upload_data(): %s" %string1
+			print ("ready1")
+			print ("    Task.upload_data(): %s" %string1)
 			status1=os.system(string1)
 			#print status1
 			#print "ready2"
@@ -181,7 +182,7 @@ class Task:
 				self.task_id
 			)
 
-			print "    Task.upload_data(): %s" %string
+			print ("    Task.upload_data(): %s" %string)
 			status=os.system(string)
 			if status:
 				raise Task_exception("scp failed!")
@@ -201,7 +202,6 @@ class Task:
 				self.db_set
 			)
 		elif self.algorithm == "app-runner":
-			open("%s/
 			app_desc = open("%s/apps/" + appid + ".json", "r").read()
 			td = TaskDescriptor(app_desc)
 			string = "ssh %s@%s \"cd %s; ./scheduler_app_run.sh %s\"" %\
@@ -224,7 +224,7 @@ class Task:
 				self.duration_in_minutes,
 				self.algorithm
 			)
-		print "    Task.run(): %s" %string
+		print ("    Task.run(): %s" %string)
 		status=os.system(string)
 		return status / 256
 
@@ -237,9 +237,9 @@ class Task:
 			self.task_id,
 			self.algorithm
 		)
-		print string
-		status=os.system(string) / 256
-		print "    Task.check(): status length = %d" % status
+		print (string)
+		status=os.system(string);
+		print ("    Task.check(): status length = %d" % status)
 		return status
 
 	def download_data(self):
@@ -253,7 +253,7 @@ class Task:
 			self.user_id,
 			self.task_id
 		)
-		print "    Task.download_data(): %s" %string
+		print ("    Task.download_data(): %s" %string)
 		status=os.system(string)
 		if status:
 			raise Task_exception("scp failed!")
@@ -282,7 +282,7 @@ class Task:
 			self.path,
 			self.task_id,
 		)
-		print "   ",string
+		print (string);
 		status=os.system(string)
 		return status / 256
 
@@ -294,7 +294,7 @@ class Task:
 			self.path,
 			self.task_id,
 		)
-		print "   ",string
+		print (string);
 		status=os.system(string)
 		return status / 256
 	
