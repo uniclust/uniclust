@@ -130,6 +130,8 @@ CREATE TABLE `files` (
   `status` enum('ready','processing','error') DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `size` int(11) DEFAULT NULL,
+  --- Количество использований файла
+  `num_of_reads` int(11) DEFAULT NULL,
   PRIMARY KEY (`file_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
