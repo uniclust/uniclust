@@ -24,6 +24,7 @@ class cl_file(db_classes):
         self.status =       file_object[2];
         self.user_id =      file_object[3];
         self.size =         file_object[4];
+        self.num_of_reads = file_object[5];
 
 class cl_operation(db_classes):
     """description of class"""

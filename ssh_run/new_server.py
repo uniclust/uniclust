@@ -44,8 +44,6 @@ def main(argv=None):
     except Exception as err:
            sys.stderr.write(err)
 
-    
-    
     while True:
         #time.sleep(60);
         fCache.start_work(db) 
