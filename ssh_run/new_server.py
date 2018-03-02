@@ -40,7 +40,7 @@ def main(argv=None):
             user = 'h91184_revka',
             passwd = None,
             db  = 'h91184_cs-suite',
-            key = 'C:\\Users\\Elik\\Documents\\uniclust_passwd.txt',)
+            key = 'C:\\Users\\Elik\\Documents\\uniclust_passwd.txt')
     except Exception as err:
            sys.stderr.write(err)
 

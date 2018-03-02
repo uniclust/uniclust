@@ -55,11 +55,11 @@ def check_file_used(db):
     for item in result:
         multiproc = db.get_info_tasks_by_taskid(item.task_id);
 
-        db.filecache_update(item.file_id, multiproc.multiproccessor_id, read_counter='+', last_read=mytime) if item.access_mode == 'r'\
-            else db.filecache_update(item.file_id, multiproc.multiproccessor_id, write_counter='+', last_write=mytime) if item.access_mode == 'w' \
-            else db.filecache_update(item.file_id, multiproc.multiproccessor_id, read_counter='+', write_counter='+', last_write=mytime, last_read=mytime)
+        db.filecache_update(item.file_id, multiproc.multiprocessor_id, read_counter='+', last_read=mytime) if item.access_mode == 'r'\
+            else db.filecache_update(item.file_id, multiproc.multiprocessor_id, write_counter='+', last_write=mytime) if item.access_mode == 'w' \
+            else db.filecache_update(item.file_id, multiproc.multiprocessor_id, read_counter='+', write_counter='+', last_write=mytime, last_read=mytime)
 
         db.update_taskfiles_by_tid_and_fid(item.task_id, item.file_id, status='1');
 
-    if DEBUG:
+    if global_vars2.DEBUG:
         print("[End File Check]")

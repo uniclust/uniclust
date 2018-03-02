@@ -29,7 +29,7 @@ class ssh_connections(object):
         if connect:
             self.connect();
 
-    def connect(host_name = None, user_name = None, key_path = None):
+    def connect(self, host_name = None, user_name = None, key_path = None):
         """
         Create SSH connection
         If run without any param, use default params to connect

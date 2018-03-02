@@ -1,6 +1,6 @@
 import pymysql as sql
 from uniclust.db_classes import cl_file as class_files, cl_multi as class_multiproc, cl_operation as class_operations,\
-                        cl_filecache as class_filecache
+                        cl_filecache as class_filecache, cl_tasksfiles as class_tasksfiles
 
 from uniclust.task import Task as class_tasks
 
@@ -9,6 +9,7 @@ import uniclust.filecache_globalvars as global_vars2
 import datetime
 
 from uniclust.task import *
+from pprint import pprint
 
 class Db_connection(object):
     def    __init__(self, host : str, user : str, passwd : str, db : str, key= None):
@@ -29,7 +30,6 @@ class Db_connection(object):
 
             if len(passwd) < 3:
                 raise Exception("Invalid passwd from file...");
-
 
         try:
             self.db = sql.connect(host, user, passwd, db);
@@ -63,6 +63,23 @@ class Db_connection(object):
             return lst;
 
         return False
+
+    def get_last_task(self):
+        """
+        Get last task from db table `tasks`, return class task (see db_classes.py for details)
+        """
+        query= "SELECT * FROM `tasks` WHERE 1 LIMIT 1"
+
+        if self.debug:
+            print(query);
+
+        result = self.execute_query(query);
+        result = self.curs.fetchone();
+
+        if len(result):
+            return class_tasks(result, self);
+
+        return False
     def set_task_status(self, task_id, status):
         """
         Set a 'status' to task by `task_id`
@@ -90,10 +107,10 @@ class Db_connection(object):
         lst = list();
         if len(result):
             for obj in result:
-                lst.append(class_tasks(obj))
+                lst.append(class_tasks(obj, self))
 
             return lst;
-
+        
         return False
     def get_all_new_operations(self, test = False):
         """
@@ -184,6 +201,7 @@ class Db_connection(object):
             """
 
             query = "SELECT * from `multiprocessors` where `multiprocessor_id`='%d' LIMIT 1"%(multi_id);
+
             if self.debug:
                 print(query);
 
@@ -331,7 +349,8 @@ class Db_connection(object):
             """
             Select info from table tasks by task_id and return 
             """
-            query= "SELECT * FROM `tasks` WHERE `task_id` ='%d'"%task_id;
+            query= "SELECT * FROM `tasks` WHERE `task_id` ='%d' LIMIT 1"%task_id;
+
             if self.debug:
                 print(query);
 
@@ -339,8 +358,9 @@ class Db_connection(object):
             result = self.fetchall()
 
             lst = list();
+
             if len(result):
-                return class_tasks(result[0]);
+                return class_tasks(result[0], self);
 
             raise Exception("[{}]Empty Result...".format(self.get_info_tasks_by_taskid.__name__));
 
@@ -391,4 +411,40 @@ class Db_connection(object):
                 print(query);
 
             result = self.execute_query(query);
+
+    def get_tasks_for_file_id(self, file_id : int):
+        """
+        Return number of tasks that use this file
+        """
+        query = """
+        SELECT
+            COUNT(*)
+        FROM 
+            `tasks_files`
+        WHERE 
+            `tasks_files`.`file_id` = '{}' AND
+            `tasks_files`.`task_id` IN (SELECT `tasks`.`task_id` FROM `tasks` WHERE `tasks`.`task_status` = 'ready')
+        """.format(file_id);
+
+        if self.debug:
+            print(query);
+
+        result = self.execute_query(query);
+        result = self.curs.fetchone();
+
+        return result[0];
+
+    def is_file_in_last_task(self, task_id, file_id : int):
+
+        query= "SELECT * FROM `tasks_files` WHERE `task_id`='{}' AND `file_id` = '{}' LIMIT 1".format(task_id, file_id);
+        
+        result = self.execute_query(query);
+        result = self.fetchall();
+
+        # 
+        if  len(result) > 0 :
+            return True
+
+        return False
+
 
