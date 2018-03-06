@@ -1,4 +1,5 @@
 from uniclust import db_classes
+from uniclust import abstract_db
 
 class Mygration(object):
     """
@@ -8,16 +9,21 @@ class Mygration(object):
     def __init__(self, db, objList : list):
         list_by_oper_types = self.sort_by_oper_type(objList);
         
-        lst = list();
+        # Сортируем операция с типом 'copyto' 
+        list_by_oper_types[2] = self.sort_prior_oper_copyto( db, objList);
+
+        self.lst = list();
         for i in range(2):
             for item in list_by_oper_types[i]:
-                lst.append(item);
+                self.lst.append(item);
 
-        return lst;
+       
+    def get_lst(self):
+        return self.lst;
 
     "Take a list of operations and return list with 3 list of diff operation"
     def sort_by_oper_type(self, objList : list):
-        lst = list( list(), list(), list());
+        lst = list( list() for i in range(3));
 
         #lst[0] = all operations 'remove'
         #lst[1] = all operations 'copyfrom'
@@ -30,9 +36,6 @@ class Mygration(object):
         return lst;
 
     def sort_prior_oper_copyto(self, db, objList : list):
-        task_lst = list(); # Получить все таски 
-
-        resLst = list(); # Возвращаемый упорядоченный список
 
         for item in objList:
             #Добавляем новый атрибут для каждого элемента списка
@@ -40,39 +43,31 @@ class Mygration(object):
             # Чтобы потом мы смогли по ним сортировать и не мучаться
             item.file_info = db.get_info_file( item.file_id );
 
-
         # Сортируем в порядке 'короткие раньше'
-        objList.sort( key = lambda item : item.file_id.size); 
+        objList.sort( key = lambda item : item.file_info.size); 
         
         #Сортировка по количеству использований файла в таблице files
-        objList.sort( key = lambda item : item.file_id.num_of_reads); 
+        objList.sort( key = lambda item : item.file_info.num_of_reads); 
 
-        #Создаем словарь типа {file_id : num_count} то есть каждому file_id ставим в соответствие количество его использований в тасках
-        # Проверяем наличие каждого file_id из objList в task_lst
-        # Потому что taskov меньше чем файлов
-
-        count = 0; # для подсчета использований
+        
+        # В цикле проходим по всем объектам нашего списка
+        # создаем новый аттрибут objList.file_used_all_tasks = в скольких тасках он используется
         for item in objList:
-            count = 0
-            for tsk in task_lst:
-
-                if (item.file_id in tsk):# если файл нужен для таска
-                    count +=1;
-
-            objList.file_used_all_tasks = count;
+            item.file_used_all_tasks = db.get_tasks_for_file_id( item.file_info.file_id );
 
         #Сортировка по тем файлам которые нужны наибольшему количеству тасков (всем таскам?)
         objList.sort( key = lambda item : item.file_used_all_tasks);
         
+
+        last_task = db.get_last_task();
         #добавляем параметр file_used_first_task
         # file_used_first_task = 1 если файл не нужен для ближайшего таска, 0 - иначе
         for item in objList:
-            item.file_used_first_task =( 0 if item.file_id in task_lst[0] else 1 );
+            item.file_used_first_task =( 0 if db.is_file_in_last_task( last_task.task_id, item.file_info.file_id ) else 1 );
 
         #Сортировка по тем файлам которые нужны ближайшему таску
         objList.sort( key = lambda item : item.file_used_first_task);
 
-        
         return objList;
 
         

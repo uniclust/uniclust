@@ -1,5 +1,7 @@
 from uniclust import filecache_globalvars as fGlobal
 from uniclust.ssh2 import *
+
+
 class Task(object):
     """Obj of tasks class"""
 
@@ -23,13 +25,12 @@ class Task(object):
         self.priority =                 task_obj[13];
         self.tokens_used =              task_obj[14];
         self.tokenes_allowed =          task_obj[15];
-        
-        self.ssh = ssh_connections(connect=False);
 
+        self.ssh = ssh_connections(connect=False);
         self.multi = db_obj.get_info_multiproc(self.multiprocessor_id);
         self.app = db_obj.get_algoritm(self.application_id);
 
-        self.ssh.connect(self.multi.host, self.multi.user_on_mult, fGlobal.key_path);
+        self.ssh.connect(self.multi.host, self.multi.user_on_it, fGlobal.key_path);
 
     def __del__(self):
         self.ssh.close();

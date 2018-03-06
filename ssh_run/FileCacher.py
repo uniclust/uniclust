@@ -10,12 +10,16 @@ import os
 import datetime
 import time
 
+from pprint import pprint
+
 from uniclust import filecache_globalvars as global_vars2
 from uniclust import filecache_filecache as filecache
 from uniclust import filecache_operations as operations
 from uniclust import ssh2
 
 from uniclust import abstract_db as database
+
+from uniclust import migration as sort_operations
 
 DEBUG = True;
 error_prefix = "[Error] ";
@@ -34,6 +38,10 @@ def start_work( db ):
 
     if result is False:
         return;
+
+    #
+    result = sort_operations.Mygration( db, result);
+    result = sort_operations.Mygration.get_lst(result);
 
     for item in result:
         print("Task");
@@ -70,3 +78,13 @@ def start_work( db ):
 
     if DEBUG:
         print("[END] Start work...");
+
+if __name__ == '__main__':
+    db=database.Db_connection(
+            host = 's08.host-food.ru',
+            user = 'h91184_revka',
+            passwd = None,
+            db  = 'h91184_cs-suite',
+            key = 'C:\\Users\\Elik\\Documents\\uniclust_passwd.txt')
+
+    start_work(db);
