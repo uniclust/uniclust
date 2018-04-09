@@ -9,6 +9,7 @@ import sys
 import os
 import datetime
 import time
+import threading
 
 from pprint import pprint
 
@@ -21,21 +22,24 @@ from uniclust import abstract_db as database
 
 from uniclust import migration as sort_operations
 
-DEBUG = True;
 error_prefix = "[Error] ";
+time_to_wait = 60;
 
-def start_work( db ):
-
-    if DEBUG:
-        print("[START] Start work at %s",datetime.datetime.now());
+"""
+Start work with operation
+@db: database 
+@super_comp: list of multiprocessor_id
+"""
+def start_work( db, super_comp_id : list):
 
     if db is False:
         print("Error while conn with DB");
         return
-#####
-    filecache.check_file_used(db);
-    result = db.get_all_new_operations(False);
 
+    filecache.check_file_used(db);
+    result = db.get_all_new_operations(super_comp_id);
+
+    #Перезапускаем
     if result is False:
         return;
 
@@ -76,9 +80,13 @@ def start_work( db ):
 
         db.lock_operation(item, error='');   
 
-    if DEBUG:
-        print("[END] Start work...");
+def start_work_thread(db, super_comp_id : list, time_to_wait : int):
+    #Бесконечный цикл, в котором перезапускаем функцию, т.к у нас отдельные потоки
+    while True:
+        start_work(db, super_comp_id, time_to_wait)
+        time.wait( time_to_wait );
 
+" For test"
 if __name__ == '__main__':
     db=database.Db_connection(
             host = 's08.host-food.ru',
@@ -87,4 +95,11 @@ if __name__ == '__main__':
             db  = 'h91184_cs-suite',
             key = 'C:\\Users\\Elik\\Documents\\uniclust_passwd.txt')
 
-    start_work(db);
+    lst = db.get_multiprocs_ids();
+
+    # Create thread for each multiproc
+    if lst != False:
+        for multi_id in lst:
+            threading.Thread(target = start_work_thread, args =(db, list(multi_id), time_to_wait)).start();
+
+    #start_work(db);
