@@ -112,7 +112,7 @@ CREATE TABLE `tasks` (
   `tokenes_allowed` int(11) DEFAULT NULL,
   PRIMARY KEY (`task_id`),
   FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`),
-  FOREIGN KEY (`multiprocessor_id`) REFERENCES `multiprocessossors`(`multiprocessor_id`),
+  FOREIGN KEY (`multiprocessor_id`) REFERENCES `multiprocessors`(`multiprocessor_id`),
   FOREIGN KEY (`application_id`) REFERENCES `applications` (`application_id`)
 ) DEFAULT CHARSET=utf8;
 
