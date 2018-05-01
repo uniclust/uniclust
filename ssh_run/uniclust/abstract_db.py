@@ -40,7 +40,7 @@ class Db_connection(object):
     
         self.curs = self.db.cursor();
 
-    def execute( query, fetch_type : int = 0):
+    def execute( self, query, fetch_type : int = 0):
         """
         Execute query with debug and fetch the result
         @query: query to execute
@@ -51,9 +51,9 @@ class Db_connection(object):
         """
 
         if self.debug:
-            print(query);
+            print("[Debug] %s"%query);
 
-        self.execute_query(query);
+        self.curs.execute(query);
 
         return self.curs.fetchall() if fetch_type == 1 else  self.curs.fetchone() if fetch_type == 2 else True;
 
@@ -122,7 +122,7 @@ class Db_connection(object):
         Return list of multiprocessor ids
         """
 
-        query = "SELECT multiprocessor_id FROM  `multiprocessors` ORDER BY  `multiprocessor_id`"
+        query = "SELECT multiprocessor_id, multiprocessor_name FROM  `multiprocessors` ORDER BY  `multiprocessor_id`"
         result = self.execute( query, fetch_type = 1 );
 
         if len(result) == 0:
@@ -130,7 +130,7 @@ class Db_connection(object):
 
         lst = list();
         for obj in result:
-            lst.append( obj[0])
+            lst.append( list(obj) )
         
         return lst
 
@@ -146,7 +146,7 @@ class Db_connection(object):
         query = "SELECT * FROM `operations` where `status` = 'new' ORDER BY `operation_id`"
 
         if len(super_comp_ids):
-            format_supercomp_for_query = ', '.join(super_comp_ids);
+            format_supercomp_for_query = ', '.join( str(ids) for ids in super_comp_ids);
             query= "SELECT * FROM `operations` where `status` = 'new' and `multiprocessor_id` IN ({})  ORDER BY `operation_id`  ".format(format_supercomp_for_query);
 
         result = self.execute( query, fetch_type = 1 );
@@ -193,7 +193,7 @@ class Db_connection(object):
         """
 
         if len(list_files) == 0:
-            return False;
+            return 0;
 
         lst = list();
 
@@ -205,7 +205,7 @@ class Db_connection(object):
         query = "SELECT SUM(size) FROM `files` WHERE (%s)"%(string);
         result = self.execute( query, fetch_type = 1 );
 
-        return result[0][0] if len(result) else False;
+        return result[0][0] if len(result) else 0;
 
     #Tasks
     def get_all_tasks(self):
@@ -329,19 +329,20 @@ class Db_connection(object):
         Lock/Unlock операцию. Принимает минимум 1 аргумент ввиде 
         cl_oper=class_operation 
         error=string
-        Use query_lock_operation(cl_oper=this) чтобы lock операцию и файл который используется в ней
-        Use query_lock_operation(cl_oper=this, error="") чтобы unlock операцию без ошибки;
-        Use query_lock_operation(cl_oper=this, error="Error") чтобы разблокировать операцию с ошибкой;
+        Use query_lock_operation(cl_oper=param) чтобы lock операцию и файл который используется в ней
+        Use query_lock_operation(cl_oper=param, error="") чтобы unlock операцию без ошибки;
+        Use query_lock_operation(cl_oper=param, error="Error") чтобы разблокировать операцию с ошибкой;
         """
 
         RUNNING_STATUS = 2;
 
         arg = cl_oper;
+
         if error is None:
-            return self.execute("UPDATE `operations` SET `status`='running' WHERE `operation_id`='%d'; UPDATE `files` set `status` ='processing' WHERE file_id = %d"%(arg.oper_id, arg.file_id));
+            query = "UPDATE `operations` SET `status`='running' WHERE `operation_id`='%d'; UPDATE `files` set `status` ='processing' WHERE file_id = %d"%(arg.oper_id, arg.file_id);
+            return self.execute(query, 1);
 
         arg2 = error;
-        print('[Error] [{}]'.format(arg2));
         if len(arg2) and self.debug:
             print('[Error] %s' % arg2);
 

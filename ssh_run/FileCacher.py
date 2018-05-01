@@ -1,10 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-#import task
-#import Backfill
-#import fcntl
-
 import sys
 import os
 import datetime
@@ -23,14 +19,16 @@ from uniclust import abstract_db as database
 from uniclust import migration as sort_operations
 
 error_prefix = "[Error] ";
-time_to_wait = 60;
+time_to_wait = 30;
 
 """
 Start work with operation
 @db: database 
-@super_comp: list of multiprocessor_id
+@super_comp_id: list of multiprocessor_id
 """
 def start_work( db, super_comp_id : list):
+
+    print ( '[ Thread ID :: ' + str(threading.currentThread().ident) + ']'+threading.currentThread().getName() + ' Start work');
 
     if db is False:
         print("Error while conn with DB");
@@ -44,8 +42,8 @@ def start_work( db, super_comp_id : list):
         return;
 
     #
-    result = sort_operations.Mygration( db, result);
-    result = sort_operations.Mygration.get_lst(result);
+    result = sort_operations.Mygration( db, result).get_lst();
+    print( result );
 
     for item in result:
         print("Task");
@@ -59,7 +57,7 @@ def start_work( db, super_comp_id : list):
         file = db.get_info_file(item.file_id);
 
         if file.status != 'ready':
-            if DEBUG:
+            if global_vars2.DEBUG:
                 print("Error Operation, error file status");
 
             continue;
@@ -76,17 +74,17 @@ def start_work( db, super_comp_id : list):
             db.filecache_update(item.file_id,item.multiprocessor_id, status='OK') if item.oper_type == 'copyto' else """None""" #post_add
 
         except Exception as err:
-            db.lock_operation(item, err);
+            db.lock_operation(item, str(err));
 
         db.lock_operation(item, error='');   
 
 def start_work_thread(db, super_comp_id : list, time_to_wait : int):
     #Бесконечный цикл, в котором перезапускаем функцию, т.к у нас отдельные потоки
     while True:
-        start_work(db, super_comp_id, time_to_wait)
-        time.wait( time_to_wait );
+        start_work(db, super_comp_id)
+        time.sleep( time_to_wait );
 
-" For test"
+
 if __name__ == '__main__':
     db=database.Db_connection(
             host = 's08.host-food.ru',
@@ -99,7 +97,9 @@ if __name__ == '__main__':
 
     # Create thread for each multiproc
     if lst != False:
+
+        print("Start work with %d multiprocs" % len(lst))
         for multi_id in lst:
-            threading.Thread(target = start_work_thread, args =(db, list(multi_id), time_to_wait)).start();
+            threading.Thread( name = multi_id[1],target = start_work_thread, args =(db, [ multi_id[0] ], time_to_wait) ).start();
 
     #start_work(db);

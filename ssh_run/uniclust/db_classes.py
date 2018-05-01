@@ -11,10 +11,11 @@ class cl_multi(db_classes):
     def __init__(self,  multi_obj ):
         self.multiprocessor_id =       multi_obj[0];
         self.multiprocessor_name =     multi_obj[1];
-        self.path =                     multi_obj[2];
-        self.user_on_it =               multi_obj[3];
-        self.host =                     multi_obj[4];
-        self.files_quota =              multi_obj[5];
+        self.num_avaible_procs =        multi_obj[2];
+        self.path =                     multi_obj[4].decode("utf-8");
+        self.user_on_it =               multi_obj[5];
+        self.host =                     multi_obj[6];
+        self.files_quota =              multi_obj[8];
 
 class cl_file(db_classes):
     """description of class"""

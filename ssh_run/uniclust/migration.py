@@ -7,16 +7,22 @@ class Mygration(object):
     Return list with priority
     """
     def __init__(self, db, objList : list):
+        self.lst = list();
+
+        if len(objList) <= 0:
+            return print("[Migration] Empty Result");
+
+        if db is None or db is False:
+            return print("[Migration] Invalid db connections")
+
         list_by_oper_types = self.sort_by_oper_type(objList);
-        
+
         # Сортируем операция с типом 'copyto' 
         list_by_oper_types[2] = self.sort_prior_oper_copyto( db, objList);
 
-        self.lst = list();
-        for i in range(2):
+        for i in range(3):
             for item in list_by_oper_types[i]:
                 self.lst.append(item);
-
        
     def get_lst(self):
         return self.lst;
@@ -63,7 +69,7 @@ class Mygration(object):
         #добавляем параметр file_used_first_task
         # file_used_first_task = 1 если файл не нужен для ближайшего таска, 0 - иначе
         for item in objList:
-            item.file_used_first_task =( 0 if db.is_file_in_last_task( last_task.task_id, item.file_info.file_id ) else 1 );
+            item.file_used_first_task =( 0 if last_task is False else 0 if db.is_file_in_last_task( last_task.task_id, item.file_info.file_id ) else 1 );
 
         #Сортировка по тем файлам которые нужны ближайшему таску
         objList.sort( key = lambda item : item.file_used_first_task);

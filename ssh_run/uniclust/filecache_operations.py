@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*
 
+import os
+
 # ПЕРЕДЕЛАТЬ files_qouta
 # удалять из fcache сразу после удаления файла
 from uniclust import filecache_globalvars as global_vars2
@@ -37,24 +39,10 @@ def delete_file(db, operation, file ):
     multi = db.get_info_multiproc(operation.multiprocessor_id);
     ssh = ssh2.ssh_connections(connect = True, host_name = multi.host, user_name = multi.user_on_it,key_path = global_vars2.key_path);
 
-    string = "rm -f %s@%s:%s/files/%d" %\
-            (
-                multi.user_on_it,
-			    multi.host,
-			    multi.path,
-			    file.file_id,
-            )
-    
-    status = ssh.exec(string);
+    remove_file = "{}/files/{}".format( multi.path, file.file_id );
 
-    if status:
-        raise Exception("Error with scp string");
-
-    if global_vars2.DEBUG:
-        print ("Task delete data: '%s'"%string);
-
-    if status:
-        raise Exception("Rm failed(MultiID:%d)"%multi_id);
+    ssh.delete_file(remove_file);
+    ssh.close();
 
     db.delete_from_filecache([file.file_id], multi.multiprocessor_id);
 
@@ -68,24 +56,11 @@ def download_file(db, operation, file):
     multi = db.get_info_multiproc(operation.multiprocessor_id);
     ssh = ssh2.ssh_connections(connect = True, host_name = multi.host, user_name = multi.user_on_it,key_path = global_vars2.key_path);
 
-    # тут что?
-    string="scp -r %s@%s:%s/files/%d %s/%d/%d" %\
-		(
-			multi.user_on_it,
-			multi.host,
-			multi.path,
-			file.file_id,
-			global_vars2.data_path,
-			file.user_id,
-			file.file_id
-		)
-    if global_vars2.DEBUG:
-        print ("Task upload data: '%s'"%string);
+    local_file = "{}/{}/{}".format(global_vars2.data_path,file.user_id,file.file_id)
+    remote_file = "{}/files/{}".format( multi.path, file.file_id );
 
-    status = ssh.exec(string);
-
-    if status:
-        raise Exception("Error with scp string");
+    ssh.download_file(remote_file, local_file);
+    ssh.close();
 
     if global_vars2.DEBUG:
         print('[END DowloadFile]');
@@ -107,6 +82,7 @@ def transfer_file(db, operation, file ):
 
     ssh = ssh2.ssh_connections(connect = True, host_name = multi.host, user_name = multi.user_on_it,key_path = global_vars2.key_path);
 
+
     if global_vars2.DEBUG:
         print("[Quota] %d max, %d curr_quota, %d file_size"% (multi.files_quota,curr_quota,file.size))
     
@@ -123,24 +99,11 @@ def transfer_file(db, operation, file ):
                 filecache.force_delete_files(db, ssh, lst, multi);
                 break;
 
-    string="scp {}/{}/{} {}@{}:{}/files/{}".format\
-			(
-				global_vars2.data_path,
-				file.user_id,
-				file.file_id,
-				multi.user_on_it,
-				multi.host,
-				multi.path,
-				file.file_id
-			)
+    local_file = "{}/{}/{}".format(global_vars2.data_path,file.user_id,file.file_id)
+    remote_file = "{}/files/{}".format( multi.path, file.file_id );
 
-    if global_vars2.DEBUG:
-        print ("Task upload data: '%s'"%string);
-
-    status = ssh.exec(string);
-
-    if status:
-        raise Exception("Error with scp string");
+    ssh.transfer_file(local_file, remote_file);
+    ssh.close();
 
     if global_vars2.DEBUG:
         print('[END TransferFile]');

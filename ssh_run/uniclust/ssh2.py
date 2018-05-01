@@ -8,7 +8,7 @@ SSH_DEBUG = True;
 
 class ssh_connections(object):
 
-    enableSSH = False;
+    enableSSH = True;
     debugSSH = True;
 
     def __init__(self, connect = False, host_name = None, user_name = None, key_path = None):
@@ -21,7 +21,12 @@ class ssh_connections(object):
 
         self.host = host_name;
         self.user = user_name;
-        self.key = key_path;
+
+        passFile = open(key_path, 'r');
+        passwd = passFile.read();
+        passwd = passwd.strip();
+
+        self.key = passwd;
 
         self.ssh = paramiko.SSHClient();
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy());
@@ -41,15 +46,16 @@ class ssh_connections(object):
             return
 
         try:
-            ssh.connect( hostname= host_name,\
+            self.ssh.connect( hostname= host_name,\
                  username = user_name,\
-                 key_filename = key_path) if host_name is not None else \
-            ssh.connect( hostname= self.host,\
+                 password = key_path) if host_name is not None else \
+            self.ssh.connect( hostname= self.host,\
                  username = self.user,\
-                 key_filename = self.key)
+                 password = self.key)
         except Exception as error:
             return error;
 
+        self.sftp = self.ssh.open_sftp();
         return True;
 
     def exec(self, command):
@@ -61,7 +67,7 @@ class ssh_connections(object):
 
         stdin,stdout, stderr = self.ssh.exec_command( command );
         if self.debugSSH:
-            print(stdout.readlines());
+            print(str(stdout.read()) + ' ' + str(stderr.read()));
 
         return stderr;
 
@@ -69,4 +75,34 @@ class ssh_connections(object):
         if self.enableSSH is False:
             return
 
-        ssh.close();
+        self.sftp.close();
+        self.ssh.close();
+        
+
+
+    def transfer_file( self, local, remote):
+        if self.enableSSH is False:
+            return
+
+        if self.debugSSH:
+            print( ' Copy from local: ['+local+']' + 'to remote [' + remote +']')
+
+        self.sftp.put(local, remote)
+
+    def download_file( self, remote, local):
+        if self.enableSSH is False:
+            return
+
+        if self.debugSSH:
+            print( ' Download from remote: ['+remote+']' + 'to local [' + local +']')
+
+        self.sftp.get( remote, local );
+
+    def delete_file( self, file):
+        if self.enableSSH is False:
+            return
+
+        if self.debugSSH:
+            print( ' Download from remote: ['+remote+']' + 'to local [' + local +']')
+
+        self.sftp.remove( file );
