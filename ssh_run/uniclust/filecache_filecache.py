@@ -21,20 +21,8 @@ def force_delete_files(db, ssh, list_files, multi ):
 
     string = '';
     for item in list_files:
-        string += "rm -f {}@{}:{}/files/{};".format(
-                    multi.user_on_it,
-				    multi.host,
-				    multi.path,
-                    item
-                )
-    
-    if global_vars2.DEBUG:
-        print ("Task upload data: '%s'"%string);
-
-    status = ssh.exec(string);
-
-    if status:
-        raise Exception("Error with scp Force delete");
+        remove_file = "{}/files/{}".format( multi.path, item );
+        ssh.delete_file(remove_file);
 
     db.delete_from_filecache(list_files, multi.multiprocessor_id);
 
@@ -53,11 +41,11 @@ def check_file_used(db):
     mytime = datetime.datetime.now();
 
     for item in result:
-        multiproc = db.get_info_tasks_by_taskid(item.task_id);
+        task = db.get_info_tasks_by_taskid(item.task_id);
 
-        db.filecache_update(item.file_id, multiproc.multiprocessor_id, read_counter='+', last_read=mytime) if item.access_mode == 'r'\
-            else db.filecache_update(item.file_id, multiproc.multiprocessor_id, write_counter='+', last_write=mytime) if item.access_mode == 'w' \
-            else db.filecache_update(item.file_id, multiproc.multiprocessor_id, read_counter='+', write_counter='+', last_write=mytime, last_read=mytime)
+        db.filecache_update(item.file_id, task.multiprocessor_id, read_counter='+', last_read=mytime) if item.access_mode == 'r'\
+            else db.filecache_update(item.file_id, task.multiprocessor_id, write_counter='+', last_write=mytime) if item.access_mode == 'w' \
+            else db.filecache_update(item.file_id, task.multiprocessor_id, read_counter='+', write_counter='+', last_write=mytime, last_read=mytime)
 
         db.update_taskfiles_by_tid_and_fid(item.task_id, item.file_id, status='1');
 

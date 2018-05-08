@@ -19,7 +19,8 @@ from uniclust import abstract_db as database
 from uniclust import migration as sort_operations
 
 error_prefix = "[Error] ";
-time_to_wait = 30;
+time_to_wait = 60;
+
 
 """
 Start work with operation
@@ -41,9 +42,11 @@ def start_work( db, super_comp_id : list):
     if result is False:
         return;
 
-    #
+    #[21, 22, 23, 24, 25, 1, 2, 3, 4, 5, 11, 12, 13, 14, 15]
+    #[14, 13, 11, 15, 12, 5, 1, 3, 2, 4]
+    print([ item.file_id for item in result ])
     result = sort_operations.Mygration( db, result).get_lst();
-    print( result );
+    print([ item.file_id for item in result ])
 
     for item in result:
         print("Task");
@@ -78,28 +81,35 @@ def start_work( db, super_comp_id : list):
 
         db.lock_operation(item, error='');   
 
-def start_work_thread(db, super_comp_id : list, time_to_wait : int):
+def start_work_thread(super_comp_id : list, time_to_wait : int):
+    db=database.Db_connection(
+            host = global_vars2.db_host,
+            user = global_vars2.db_user,
+            passwd = None,
+            db  = global_vars2.db_name,
+            key = global_vars2.db_passwd_file)
     #Бесконечный цикл, в котором перезапускаем функцию, т.к у нас отдельные потоки
     while True:
         start_work(db, super_comp_id)
         time.sleep( time_to_wait );
 
-
 if __name__ == '__main__':
     db=database.Db_connection(
-            host = 's08.host-food.ru',
-            user = 'h91184_revka',
+            host = global_vars2.db_host,
+            user = global_vars2.db_user,
             passwd = None,
-            db  = 'h91184_cs-suite',
-            key = 'C:\\Users\\Elik\\Documents\\uniclust_passwd.txt')
+            db  = global_vars2.db_name,
+            key = global_vars2.db_passwd_file)
 
     lst = db.get_multiprocs_ids();
-
+    db.db.close();
     # Create thread for each multiproc
     if lst != False:
 
         print("Start work with %d multiprocs" % len(lst))
         for multi_id in lst:
-            threading.Thread( name = multi_id[1],target = start_work_thread, args =(db, [ multi_id[0] ], time_to_wait) ).start();
+            time.sleep(1)
+            threading.Thread( name = multi_id[1],target = start_work_thread, args =( [ multi_id[0] ], time_to_wait) ).start();
 
     #start_work(db);
+

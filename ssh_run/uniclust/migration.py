@@ -43,36 +43,64 @@ class Mygration(object):
 
     def sort_prior_oper_copyto(self, db, objList : list):
 
+        files = db.get_all_files();
         for item in objList:
-            #Добавляем новый атрибут для каждого элемента списка
-            # атрибут хранит всю информацию о файле, в т.ч размер файла
-            # Чтобы потом мы смогли по ним сортировать и не мучаться
-            item.file_info = db.get_info_file( item.file_id );
+            for file in files:
+                if file.file_id == item.file_id:
+                    item.file_size = file.size
+                    item.num_of_reads = file.num_of_reads
 
         # Сортируем в порядке 'короткие раньше'
-        objList.sort( key = lambda item : item.file_info.size); 
+        objList.sort( key = lambda item : item.file_size); 
         
         #Сортировка по количеству использований файла в таблице files
-        objList.sort( key = lambda item : item.file_info.num_of_reads); 
+        # Обратная сортировка, то есть те, у кого большое количество чтений должны передаваться раньше
+        objList.sort( key = lambda item : item.num_of_reads, reverse = True); 
 
         
         # В цикле проходим по всем объектам нашего списка
         # создаем новый аттрибут objList.file_used_all_tasks = в скольких тасках он используется
+
+        tskFiles = db.get_all_taskfiles()
+        allTsk = db.get_all_tasks()
+
+        if allTsk is False:
+            return
+
         for item in objList:
-            item.file_used_all_tasks = db.get_tasks_for_file_id( item.file_info.file_id );
+            item.file_used_all_tasks = 0;
 
-        #Сортировка по тем файлам которые нужны наибольшему количеству тасков (всем таскам?)
-        objList.sort( key = lambda item : item.file_used_all_tasks);
+            for tsk in tskFiles:
+                if item.file_id == tsk.file_id and (tsk.task_id,) in allTsk:
+                    item.file_used_all_tasks += 1
+            
+            #item.file_used_all_tasks = db.get_tasks_for_file_id( item.file_id );
+
+        #Сортировка по тем файлам которые нужны наибольшему количеству тасков (всем таскам?
+        # Обратная сортировка, то есть те файлы, которые используют чаще, должны оказаться первее
+        objList.sort( key = lambda item : item.file_used_all_tasks, reverse = True);
         
-
-        last_task = db.get_last_task();
         #добавляем параметр file_used_first_task
         # file_used_first_task = 1 если файл не нужен для ближайшего таска, 0 - иначе
-        for item in objList:
-            item.file_used_first_task =( 0 if last_task is False else 0 if db.is_file_in_last_task( last_task.task_id, item.file_info.file_id ) else 1 );
+
+        for i in range( len(allTsk)):
+            task = allTsk[i][0]
+
+            for item in objList:
+
+                item.file_used_first_task = 1
+                for tsk in tskFiles:
+                    if task == tsk.task_id and item.file_id == tsk.file_id:
+                         item.file_used_first_task = 0
+
+           # for item in objList:
+           #     item.file_used_first_task = (   0 if db.is_file_in_last_task( task, item.file_id ) else 1 );
+
+            objList.sort( key = lambda item : item.file_used_first_task, reverse= True);
+        
 
         #Сортировка по тем файлам которые нужны ближайшему таску
-        objList.sort( key = lambda item : item.file_used_first_task);
+        #objList.sort( key = lambda item : item.file_used_first_task);
 
         return objList;
 

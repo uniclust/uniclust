@@ -22,11 +22,12 @@ class ssh_connections(object):
         self.host = host_name;
         self.user = user_name;
 
-        passFile = open(key_path, 'r');
-        passwd = passFile.read();
-        passwd = passwd.strip();
-
-        self.key = passwd;
+        self.key = '';
+        if key_path is not None:
+            passFile = open(key_path, 'r');
+            passwd = passFile.read();
+            passwd = passwd.strip();
+            self.key = passwd;
 
         self.ssh = paramiko.SSHClient();
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy());
@@ -44,6 +45,12 @@ class ssh_connections(object):
 
         if self.enableSSH is False:
             return
+
+        if key_path is not None:
+            passFile = open(key_path, 'r');
+            passwd = passFile.read();
+            passwd = passwd.strip();
+            self.key = passwd;
 
         try:
             self.ssh.connect( hostname= host_name,\
@@ -93,6 +100,9 @@ class ssh_connections(object):
         if self.enableSSH is False:
             return
 
+        if self.connect:
+            return
+
         if self.debugSSH:
             print( ' Download from remote: ['+remote+']' + 'to local [' + local +']')
 
@@ -103,6 +113,6 @@ class ssh_connections(object):
             return
 
         if self.debugSSH:
-            print( ' Download from remote: ['+remote+']' + 'to local [' + local +']')
+            print( ' Delete File['+file+']')
 
         self.sftp.remove( file );

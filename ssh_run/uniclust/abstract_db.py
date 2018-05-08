@@ -23,7 +23,7 @@ class Db_connection(object):
         self.error = False
         self.error_message = '';
 
-        self.debug = True;
+        self.debug = False;
 
         if key is not None:
             passFile = open(key, 'r');
@@ -34,7 +34,8 @@ class Db_connection(object):
                 raise Exception("[Error] Key must be at least 4 characters");
 
         try:
-            self.db = sql.connect(host, user, passwd, db);
+            ""
+            self.db = sql.connect(host, user, passwd, db, autocommit=True );
         except sql.InternalError as str:
             raise Exception(str.args);
     
@@ -53,7 +54,7 @@ class Db_connection(object):
         if self.debug:
             print("[Debug] %s"%query);
 
-        self.curs.execute(query);
+        self.curs.execute( query );
 
         return self.curs.fetchall() if fetch_type == 1 else  self.curs.fetchone() if fetch_type == 2 else True;
 
@@ -208,12 +209,12 @@ class Db_connection(object):
         return result[0][0] if len(result) else 0;
 
     #Tasks
-    def get_all_tasks(self):
+    def get_all_files(self):
         """
-        Get all tasks from db table `tasks`, return [list] class task (see db_classes.py for details)
+        Get All files
         """
 
-        query= "SELECT * FROM `tasks` WHERE 1"
+        query= "SELECT * FROM `files` WHERE 1"
         result = self.execute( query, fetch_type = 1 );
 
         if len(result) == 0:
@@ -221,20 +222,43 @@ class Db_connection(object):
 
         lst = list();
         for obj in result:
-            lst.append(Task(obj, self))
+            lst.append(class_files(obj))
         
         return lst
+    def get_all_taskfiles(self):
+        """
+        Get All files
+        """
 
+        query= "SELECT * FROM `tasks_files` WHERE 1"
+        result = self.execute( query, fetch_type = 1 );
+
+        if len(result) == 0:
+            return False;
+
+        lst = list();
+        for obj in result:
+            lst.append(class_tasksfiles(obj))
+        
+        return lst
     def get_last_task(self):
         """
         Get last task from db table `tasks`, return class task (see db_classes.py for details)
         """
 
-        query= "SELECT * FROM `tasks` WHERE 1 LIMIT 1"
+        query= "SELECT `task_id` FROM `tasks` WHERE `task_status`='new' ORDER BY `task_id` DESC LIMIT 1"
         result = self.execute( query, fetch_type = 1 );
 
-        return class_tasks(result[0], self) if len(result) else False;
+        return result[0][0] if len(result) else False;
+    def get_all_tasks(self):
+        """
+        GG
+        """
 
+        query= "SELECT `task_id` FROM `tasks` WHERE `task_status`='new' ORDER BY `task_id` DESC"
+        result = self.execute( query, fetch_type = 1 );
+
+        return result if len(result) else False;
     def get_info_tasks_by_taskid(self, task_id):
         """
         Select info from table tasks by task_id and return 
@@ -282,7 +306,7 @@ class Db_connection(object):
             `tasks_files`
         WHERE 
             `tasks_files`.`file_id` = '{}' AND
-            `tasks_files`.`task_id` IN (SELECT `tasks`.`task_id` FROM `tasks` WHERE `tasks`.`task_status` = 'ready')
+            `tasks_files`.`task_id` IN (SELECT `tasks`.`task_id` FROM `tasks` WHERE `tasks`.`task_status` = 'new')
         """.format(file_id);
 
         result = self.execute( query, fetch_type = 1 );
@@ -346,7 +370,7 @@ class Db_connection(object):
         if len(arg2) and self.debug:
             print('[Error] %s' % arg2);
 
-        query = "UPDATE `operations` SET `status`='%s', `error_message`='%s' WHERE `operation_id`='%d'; UPDATE `files` SET `status`='ready' WHERE `file_id`=%d" % ( 'finished' if len(arg2) == 0 else 'error', arg2, arg.oper_id, arg.file_id);
+        query = "UPDATE `operations` SET `status`='%s', `error_message`='%s' WHERE `operation_id`='%d'; UPDATE `files` SET `status`='ready' WHERE `file_id`=%d" % ( 'finished' if len(arg2) == 0 else 'error', self.db.escape_string(arg2), arg.oper_id, arg.file_id);
         result = self.execute( query );
 
     def delete_from_filecache(self, file_id, multi_id):
