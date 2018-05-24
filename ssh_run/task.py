@@ -5,7 +5,7 @@ import os
 import exceptions
 import smtplib
 import email.mime.text
-import desc_parser.py
+from app_descriptors.desc_parser import TaskDescriptor
 
 class Task_exception(exceptions.Exception):
     def __init__(self,message):
