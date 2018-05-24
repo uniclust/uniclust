@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import global_vars
 import os
 import exceptions
