@@ -860,6 +860,8 @@ def main(argv=None):
         if db == None:
            sys.stderr.write("Database connection failed")
            return 1
+    except:
+        print("Database connaction exception")
 
     while True:
         time.sleep(10)
