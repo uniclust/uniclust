@@ -20,7 +20,7 @@ def CloseWindowInInterval(CloseWindowFreeStart,CloseWindowFreeEnd,NumProcClosed,
             if WindowFreeToClose[NumProcClosed][i2][0] >= CloseWindowFreeStart:
                 # if window end  out of interval (...[...)...] we increase interval start
                 if WindowFreeToClose[NumProcClosed][i2][1] > CloseWindowFreeEnd or WindowFreeToClose[NumProcClosed][i2][1] == -1:
-                    print ' start big from ', NumProcClosed,'interval',WindowFreeToClose[NumProcClosed][i2][0],' and ',WindowFreeToClose[NumProcClosed][i2][1], ' and window  ', CloseWindowFreeStart, CloseWindowFreeEnd
+                    print(' start big from ', NumProcClosed,'interval',WindowFreeToClose[NumProcClosed][i2][0],' and ',WindowFreeToClose[NumProcClosed][i2][1], ' and window  ', CloseWindowFreeStart, CloseWindowFreeEnd)
                     WindowFreeToClose[NumProcClosed][i2][0] = CloseWindowFreeEnd
                     continue
                 else: #window in interval (....[...]...) we delete interval
@@ -31,7 +31,7 @@ def CloseWindowInInterval(CloseWindowFreeStart,CloseWindowFreeEnd,NumProcClosed,
             else: #window start before interval [...(...
                 # if window end after interval or window have no end  [...(....)..]we insert new interval and increase interval start to have result  [..](  )[..]
                 if (WindowFreeToClose[NumProcClosed][i2][1]>CloseWindowFreeEnd) or (WindowFreeToClose[NumProcClosed][i2][1] == -1):
-                    print ' ins in',NumProcClosed,'interval', WindowFreeToClose[NumProcClosed][i2][0],' and ',CloseWindowFreeStart,' and interval change to ',  CloseWindowFreeEnd, ' and  ',  WindowFreeToClose[NumProcClosed][i2][1]
+                    print(' ins in',NumProcClosed,'interval', WindowFreeToClose[NumProcClosed][i2][0],' and ',CloseWindowFreeStart,' and interval change to ',  CloseWindowFreeEnd, ' and  ',  WindowFreeToClose[NumProcClosed][i2][1])
                     #WindowFreeToClose[NumProcClosed][i2][0] = CloseWindowFreeEnd
                     WindowFreeToClose[NumProcClosed].insert(i2, [WindowFreeToClose[NumProcClosed][i2][0],CloseWindowFreeStart])
                     WindowFreeToClose[NumProcClosed][i2+1][0] = CloseWindowFreeEnd
@@ -44,7 +44,7 @@ def CloseWindowInInterval(CloseWindowFreeStart,CloseWindowFreeEnd,NumProcClosed,
             #error section
            # print ' error ', NumProcClosed,'interval',WindowFreeToClose[NumProcClosed][i2][0],' and ',WindowFreeToClose[NumProcClosed][i2][1], ' and window  ', CloseWindowFreeStart, CloseWindowFreeEnd
     except:
-                print '  FAIL  iteratot',i2,' NumProc  ',NumProcClosed,'  lenght windowfreee   ', len(WindowFreeToClose[NumProcClosed]), ' xrange   ', xrange(0,len(WindowFreeToClose[NumProcClosed]))
+                print('  FAIL  iteratot',i2,' NumProc  ',NumProcClosed,'  lenght windowfreee   ', len(WindowFreeToClose[NumProcClosed]), ' xrange   ', xrange(0,len(WindowFreeToClose[NumProcClosed])))
     #print ' WindowFree after closed interval', WindowFreeToClose
     return WindowFreeToClose
 def AddTask(MaxTimeEvalution,NumProcRequire,NumProc,WindowFree):
@@ -114,6 +114,6 @@ def MakeSchedule(SubmittedTask,TaskList,NumProc):
             df = WindowFree[Task[3]][0][0]
             [TaskStart,TaskEnd,WindowFree] = AddTask(Task[2],Task[3],NumProc,WindowFree)
         except:
-            print ' Crash Task Number   ', Task[0], ' WindowFree ', WindowFree[Task[3]]
+            print(' Crash Task Number   ', Task[0], ' WindowFree ', WindowFree[Task[3]])
         TaskSchedule.append([Task[0],TaskStart,TaskEnd,Task[3]])
     return [TaskSchedule,WindowFree]

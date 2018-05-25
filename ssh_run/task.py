@@ -2,12 +2,11 @@
 
 import global_vars
 import os
-import exceptions
 import smtplib
 import email.mime.text
 from app_descriptors.desc_parser import TaskDescriptor
 
-class Task_exception(exceptions.Exception):
+class Task_exception(Exception):
     def __init__(self,message):
         self.message=message
 

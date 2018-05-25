@@ -118,7 +118,7 @@ def become_daemon(config,really_become = True):
     #TODO do locks for it
     #
     # write pid file
-    pidfile = file(config['pid_file'], 'w')
+    pidfile = open(config['pid_file'], 'w')
     
     # decouple from parent environment
     os.chdir("/")
@@ -144,8 +144,8 @@ def become_daemon(config,really_become = True):
     sys.stdin.close()
     
     #si = file('dev/null', 'r')
-    so = file(config[logfile], 'a+')
-    se = file(config[errfile], 'a+')
+    so = open(config[logfile], 'a+')
+    se = open(config[errfile], 'a+')
     
     #os.dup2(si.fileno(), sys.stdin.fileno())
     os.dup2(so.fileno(), sys.stdout.fileno())
@@ -158,7 +158,7 @@ def become_daemon(config,really_become = True):
     #TODO
     # Make lock for it
     #
-    pidfile.fclose()
+    pidfile.close()
     
     #
     # change user
