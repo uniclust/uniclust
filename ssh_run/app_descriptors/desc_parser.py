@@ -35,7 +35,7 @@ class TaskDescriptor:
                                     required = self.arguments[key]['required'],\
                                     type = argType)
         return parser
-inputString = open(sys.argv[1], 'r').read()
-taskDescriptor = TaskDescriptor(inputString)
-print(taskDescriptor.insertParameters(\
-    vars(taskDescriptor.getArgsParser().parse_args(sys.argv[2:]))))
+#inputString = open(sys.argv[1], 'r').read()
+#taskDescriptor = TaskDescriptor(inputString)
+#print(taskDescriptor.insertParameters(\
+#    vars(taskDescriptor.getArgsParser().parse_args(sys.argv[2:]))))
