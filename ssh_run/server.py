@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import global_vars
 import task
 import sys
 import os
@@ -16,7 +15,7 @@ from uniclust import server_common
 flag=True
 
 
-def mainCycle():
+def mainCycle(config):
     while 1:
         #time.sleep(10)
         #
@@ -44,10 +43,10 @@ def mainCycle():
         db_error_flag=False
         try:
             db = db2.db_connect(\
-                user=global_vars.db_user,
-                host=global_vars.db_host,
-                db=global_vars.db_name,
-                passwd=global_vars.db_passwd
+                user = config['db_user'],
+                host = config['db_host'],
+                db = config['db_name'],
+                passwd = config['db_passwd']
             )
         except:
             db_error_flag=True
@@ -56,11 +55,11 @@ def mainCycle():
             print ("Couldn't connect to the database!")
             print ("-------------------------")
             if flag:
-                os.unlink(global_vars.lock_path)
+                os.unlink(config['lock_path'])
             sys.exit(1)
 
 
-        #f=open(global_vars.lock_path,"w")
+        #f=open(config['lock_path'],"w")
         #f.write("Do not delete it!")
         #pid = str(os.getpid())
         #f.write("%s\n" %pid)
@@ -692,7 +691,7 @@ def mainCycle():
 
                     """%{'run_t': tsklist[Tasks[0]].running_time, "num_t": tsklist[Tasks[0]].task_id}
                 db2.db_execute_query(curs, query);
-                if Tasks[1]<global_vars.timeout_server:
+                if Tasks[1]<config['timeout_server']:
                     if tsklist[Tasks[0]].task_id not in SubTaskId:
                         print ("subtasks")
                         print (SubTaskId)
@@ -765,7 +764,7 @@ def main(argv=None):
     mainCycle()
 
     print ("Server ends successfully!")
-    os.unlink(global_vars.lock_path)
+    os.unlink(config['lock_path'])
 
     return 0
 

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import global_vars
 import os
 import smtplib
 import email.mime.text
@@ -14,7 +13,7 @@ class Task_exception(Exception):
         return "    Task error:"+message
 
 class Task:
-    def __init__(self,db_row):
+    def __init__(self, db_row, config):
         self.user_id              = db_row[0]
         self.task_id              = db_row[1]
         self.algorithm            = db_row[2]
@@ -33,6 +32,7 @@ class Task:
         self.seq_type             = ""
         self.blast_outp_detail_lvl= 0
         self.seq_simil_thrshld    = 0
+        self.config               = config
 
     def init_blast_task(self,db_row):
         if len(db_row)>0:
@@ -46,19 +46,19 @@ class Task:
         if self.algorithm == "FitProt":
             run_fitprot="cd %s/%d/%d; /home/romanenkov/fitprot/search_substs.py -p %s/%d/%d/structure.pdb -s %s/%d/%d/selection.txt -o %s/%d/%d/tmp > /home/romanenkov/aligner/ssh_run/fit_log.txt; scp %s/%d/%d/energy_array %s@%s:%s/%d.en" %\
             (
-                global_vars.data_path,
+                config['data_path'],
                 self.user_id,
                 self.task_id,
-                global_vars.data_path,
+                config['data_path'],
                 self.user_id,
                 self.task_id,
-                global_vars.data_path,
+                config['data_path'],
                 self.user_id,
                 self.task_id,
-                global_vars.data_path,
+                config['data_path'],
                 self.user_id,
                 self.task_id,
-                global_vars.data_path,
+                config['data_path'],
                 self.user_id,
                 self.task_id,
                 self.user_on_mult,
@@ -76,7 +76,7 @@ class Task:
             os.system(run_fitprot)
             #string4="scp %s/%d/%d/energy_array %s@%s:%s/energy_array" %\
             #(
-            #	global_vars.data_path,
+            #	config['data_path'],
             #	self.user_id,
             #	self.task_id,
             #	self.host,
@@ -86,7 +86,7 @@ class Task:
 
             string1="scp %s/%d/%d/structure.pdb %s@%s:%s/%d.pdb" %\
             (
-                global_vars.data_path,
+                config['data_path'],
                 self.user_id,
                 self.task_id,
                 self.user_on_mult,
@@ -96,7 +96,7 @@ class Task:
             )
             string2="scp %s/%d/%d/selection.txt %s@%s:%s/%d.txt" %\
             (
-                global_vars.data_path,
+                config['data_path'],
                 self.user_id,
                 self.task_id,
                 self.user_on_mult,
@@ -116,13 +116,13 @@ class Task:
         elif self.algorithm == "nhunt":
             #run_nhunt="cd %s/%d/%d; /home/romanenkov/nhunt/nhunt -i %s/%d/%d/sequences.fasta -d /home/romanenkov/nhunt/db.fasta; scp %s/%d/%d/nhunt.out %s@%s:%s/%d.out" %\
             #(
-            #	global_vars.data_path,
+            #	config['data_path'],
             #	self.user_id,
             #	self.task_id,
-            #	global_vars.data_path,
+            #	config['data_path'],
             #	self.user_id,
             #	self.task_id,
-            #	global_vars.data_path,
+            #	config['data_path'],
             #	self.user_id,
             #	self.task_id,
             #	self.user_on_mult,
@@ -138,7 +138,7 @@ class Task:
             print ("1 done")
             string1="scp %s/%d/%d/sequences.fasta %s@%s:%s/%d.fasta" %\
             (
-                global_vars.data_path,
+                config['data_path'],
                 self.user_id,
                 self.task_id,
                 self.user_on_mult,
@@ -157,7 +157,7 @@ class Task:
             #print "2 done"
             #string2="scp %s/../nhunt/db.fasta %s@%s:%s/db%d.fasta" %\
             #(
-            #	global_vars.data_path,
+            #	config['data_path'],
             #	self.user_on_mult,
             #	self.host,
             #	self.path,
@@ -174,7 +174,7 @@ class Task:
         else:
             string="scp %s/%d/%d/sequences.fasta %s@%s:%s/%d.fasta" %\
             (
-                global_vars.data_path,
+                config['data_path'],
                 self.user_id,
                 self.task_id,
                 self.user_on_mult,
@@ -250,7 +250,7 @@ class Task:
             self.host,
             self.path,
             self.task_id,
-            global_vars.data_path,
+            config['data_path'],
             self.user_id,
             self.task_id
         )
@@ -261,15 +261,15 @@ class Task:
 
         string="chmod -Rf g+wrX %s/%d/%d" %\
         (
-            global_vars.data_path,
+            config['data_path'],
             self.user_id,
             self.task_id
         )
         status=os.system(string)
         string="chgrp -Rf %s %s/%d/%d" %\
         (
-             global_vars.local_group,
-             global_vars.data_path,
+             config['local_group'],
+             config['data_path'],
              self.user_id,
              self.task_id
         )
@@ -311,17 +311,17 @@ https://%s/%s/pages/edit_task.php?task_id=%d
         (
             self.task_id,
             status,
-            global_vars.site_address,
-            global_vars.path_on_site,
+            config['site_address'],
+            config['path_on_site'],
             self.task_id
         )
 
         msg= email.mime.text.MIMEText(msg_text)
         msg['Subject']= "Information about state of the task with number %d on the Aligner website" % (self.task_id)
-        from_str="\"Aligner site administration\" <webmaster@%s>" % (global_vars.site_address)
+        from_str="\"Aligner site administration\" <webmaster@%s>" % (config['site_address'])
         msg['From']= from_str
         msg['To']=self.email
 
         server = smtplib.SMTP('localhost')
-        server.sendmail("webmaster@%s" %global_vars.site_address,[self.email],msg.as_string())
+        server.sendmail("webmaster@%s" %config['site_address'],[self.email],msg.as_string())
         server.quit()
