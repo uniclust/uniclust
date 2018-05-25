@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-#import fcntl
+import fcntl
 import argparse
 
-#from pwd import getpwnam
+from pwd import getpwnam
 
-test = True;
 
 def parse_config_file(config_file_name="/etc/uniclust/uniclust.conf"):
     """
@@ -16,9 +15,6 @@ def parse_config_file(config_file_name="/etc/uniclust/uniclust.conf"):
     If some parameters skip in config file then it is 
     assigned by default.
     """
-
-    if test:
-        return;
 
     f=open(config_file_name,"r")
     
@@ -74,16 +70,14 @@ def become_daemon(config,really_become = True):
     """
     Move server into the daemon mode.
     """
-    if test:
-        return;
 
     # privileges
-    #goal_uid=getpwnam(config['user']).pw_uid
-    #goal_gid=getpwnam(config['group']).pw_gid
+    goal_uid=getpwnam(config['user']).pw_uid
+    goal_gid=getpwnam(config['group']).pw_gid
     
     try:
         f=os.open(config['lock_file'],os.O_CREAT|os.O_WRONLY|os.O_SYNC, 777)
-        #fcntl.flock(f,fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(f,fcntl.LOCK_EX | fcntl.LOCK_NB)
     except Exception as s:
         print ("Сhecking server lock... Fail!")
         print ("Try to delete the locking file '%s' manually" % (config['lock_file']))
@@ -101,7 +95,7 @@ def become_daemon(config,really_become = True):
     
     if os.geteuid()!= 0:
         print ("Sorry, you need root privilegies to run it as daemon")
-        #sys.exit(1)
+        sys.exit(1)
     
     #
     # Do first fork
