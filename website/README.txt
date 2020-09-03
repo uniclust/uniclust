@@ -9,11 +9,11 @@
 
 == Directories ==
 
-* etc - actual for php scripts configuration.
+* clear_php/etc - actual for php scripts configuration.
 
-* system - php library to organize site.     
+* clear_php/system - php library to organize site.     
 
-* site  - set of php scripts, which organize site structure.
+* clear_php/site  - set of php scripts, which organize site structure.
 
 
 If you interesting in installation this web interface on  website please create tables

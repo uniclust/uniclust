@@ -1,0 +1,229 @@
+<?php
+
+//создание страниц модуля, наследуется от hook_menu
+function uniclust_menu()
+{
+	//Страница конфигурации модуля
+	$items['admin/config/uniclust'] = array(
+      'title' => 'New configuration section',
+      'position' => 'left',
+      'weight' => -100,
+      'page callback' => 'system_admin_menu_block_page',
+      'access arguments' => array('administer site configuration'),
+      'file' => 'system.admin.inc',
+      'file path' => drupal_get_path('module', 'system'),
+    );
+ 
+    $items['admin/config/uniclust/config_form'] = array(
+      'title' => 'Настройки Uniclust',
+      'description' => 'Настройка модуля UNICLUST для постановки задач на выполнение на суперкомпьютеры',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('uniclust_config_form'),
+      'access arguments' => array('administer site configuration'),
+      'file' => 'uniclust.admin.inc',
+    );
+	
+	//Страница для входа в учётную запись UNICLUST
+	$items['uniclust'] = array(//в кавычках URL адрес
+		'title' => 'UNICLUST',//Заголовок страницы. Передаваемое значение не должно быть завернуто в функцию t().
+		'page callback' => 'authorization_page_callback',//функция возвращающая содержимое страницы
+		'page arguments' => array(),
+		'access callback' => 'user_is_logged_in',//TRUE,//функция определяющая доступ к данной странице. Если эта функция возвращает TRUE значит пользователь имеет доступ, если FALSE - нет. В нашем случае мы сразу передаем TRUE, что означает что все пользователи имеют доступ
+		'menu_name' => 'navigation',//машинное имя меню в котором будет создана ссылка на эту страницу
+		'file' => 'authorization.pages.inc',//имя файла в котором содержится функция объявленная в page callback, если не указано значит функция содержится в том же файле что и hook_menu(), но по правилам хорошего тона следует выносить все подобные функции в файл MODULENAME.pages.inc
+	);
+	
+	//Рабочая среда UNICLUST. Основная страница, как корень дерева
+	$items['uniclust/workspace'] = array(//в кавычках URL адрес
+		'title' => 'UNICLUST Workspace',//Заголовок страницы. Передаваемое значение не должно быть завернуто в функцию t().
+		'page callback' => 'mainpage_uniclust_callback',//функция возвращающая содержимое страницы
+		'page arguments' => array(),
+		'access callback' => 'user_is_logged_in',//функция определяющая доступ к данной странице. Если эта функция возвращает TRUE значит пользователь имеет доступ, если FALSE - нет. В нашем случае мы сразу передаем TRUE, что означает что все пользователи имеют доступ
+		'file' => 'uniclust.pages.inc',//имя файла в котором содержится функция объявленная в page callback, если не указано значит функция содержится в том же файле что и hook_menu(), но по правилам хорошего тона следует выносить все подобные функции в файл MODULENAME.pages.inc
+	);
+	
+	//Страница для администраторов UNICLUST(руководителей группы)
+	$items['uniclust/admin'] = array(//в кавычках URL адрес
+		'title' => 'Админ панель UNICLUST',//Заголовок страницы. Передаваемое значение не должно быть завернуто в функцию t().
+		'page callback' => 'adminpage_uniclust_callback',//функция возвращающая содержимое страницы
+		'page arguments' => array(),
+		'access callback' => 'user_is_logged_in',//функция определяющая доступ к данной странице. Если эта функция возвращает TRUE значит пользователь имеет доступ, если FALSE - нет. В нашем случае мы сразу передаем TRUE, что означает что все пользователи имеют доступ
+		'file' => 'admin.pages.inc',//имя файла в котором содержится функция объявленная в page callback, если не указано значит функция содержится в том же файле что и hook_menu(), но по правилам хорошего тона следует выносить все подобные функции в файл MODULENAME.pages.inc
+	);
+	
+	//Страница для просмотра и редактироания информации о своём аккаунте UNICLUST
+	$items['uniclust/account'] = array(//в кавычках URL адрес
+		'title' => 'Личный кабинет',//Заголовок страницы. Передаваемое значение не должно быть завернуто в функцию t().
+		'page callback' => 'account_uniclust_callback',//функция возвращающая содержимое страницы
+		'page arguments' => array(),
+		'access callback' => 'user_is_logged_in',//функция определяющая доступ к данной странице. Если эта функция возвращает TRUE значит пользователь имеет доступ, если FALSE - нет. В нашем случае мы сразу передаем TRUE, что означает что все пользователи имеют доступ
+		'file' => 'account.pages.inc',//имя файла в котором содержится функция объявленная в page callback, если не указано значит функция содержится в том же файле что и hook_menu(), но по правилам хорошего тона следует выносить все подобные функции в файл MODULENAME.pages.inc
+		
+	);
+	
+	//Страница для создания новой задачи
+	$items['uniclust/create_task'] = array(//в кавычках URL адрес
+		'title' => 'Страница создания новой задачи',//Заголовок страницы. Передаваемое значение не должно быть завернуто в функцию t().
+		'page callback' => 'create_task_uniclust_callback',//функция возвращающая содержимое страницы 
+		'page arguments' => array(),
+		'access callback' => 'user_is_logged_in',//функция определяющая доступ к данной странице. Если эта функция возвращает TRUE значит пользователь имеет доступ, если FALSE - нет. В нашем случае мы сразу передаем TRUE, что означает что все пользователи имеют доступ
+		'file' => 'create_task.pages.inc',//имя файла в котором содержится функция объявленная в page callback, если не указано значит функция содержится в том же файле что и hook_menu(), но по правилам хорошего тона следует выносить все подобные функции в файл MODULENAME.pages.inc
+		'menu_name' => 'navigation,'
+	);
+	
+	//Страница для создания новой задачи
+	$items['uniclust/files'] = array(//в кавычках URL адрес
+		'title' => 'Страница для работы с файлами',//Заголовок страницы. Передаваемое значение не должно быть завернуто в функцию t().
+		'page callback' => 'files_uniclust_callback',//функция возвращающая содержимое страницы 
+		'page arguments' => array(),
+		'access callback' => 'user_is_logged_in',//функция определяющая доступ к данной странице. Если эта функция возвращает TRUE значит пользователь имеет доступ, если FALSE - нет. В нашем случае мы сразу передаем TRUE, что означает что все пользователи имеют доступ
+		'file' => 'files.pages.inc',//имя файла в котором содержится функция объявленная в page callback, если не указано значит функция содержится в том же файле что и hook_menu(), но по правилам хорошего тона следует выносить все подобные функции в файл MODULENAME.pages.inc
+		'menu_name' => 'navigation,'
+	);
+	return $items;
+}
+
+//Кнопка для отвязки данной учётки Drupal от текущего аккаунта UNICLUST
+//Описал её здесь, т.к. она может быть использована на нескольких страницах модуля
+function unbind_account_form() 
+{
+	
+	if(getFullUniclustUserInfo()['id']==0) header("Location: ".url('uniclust',array('absolute'=>true)));
+	$form['submit_button'] = array(
+		'#type' => 'submit',
+		'#value' => t('Отвязаться от этого аккаунта UNICLUST'),
+	  );
+	return $form;
+}
+
+function unbind_account_form_submit($form, &$form_state)
+{
+	global $user;
+	$query = db_delete('uniclust_drupal_user_bindings');
+	$query->condition('drupal_uid', $user->uid);
+	$num_deleted = $query->execute();
+}
+
+//функция, возвращающая подключение к базе данных UNICLUST
+function get_db_connection()
+{
+	$host_address = 'localhost'; // адрес сервера 
+	$database_name = 'outdatabasekursach'; // имя базы данных
+	$db_user = 'root'; // имя пользователя
+	$db_password = ''; // пароль
+	$link = mysqli_connect($host_address, $db_user, $db_password, $database_name);
+	/* проверка соединения */
+	if (mysqli_connect_errno()) {
+		printf("Соединение не удалось: %s\n", mysqli_connect_error());
+		exit();
+	}
+	return $link;
+}
+
+//Функция, возвращающая пароль, хэшированный определённым в начале способом
+//Это необходимо будет перенести на функционал БД. Здесь об этом знать не должны
+function get_password_hash($password)
+{
+	//1 - хэшируем $password,
+	//2 - конкатенируем к началу полученного хэша первую букву из $password и к концу последнюю букву из $password
+	//3 - хэшируем полученное ещё раз	
+	return md5($password[0].md5($password).$password[drupal_strlen($password)-1]);
+}
+
+
+//Функция
+//вся информация о пользователе UNICLUST
+//если текущего пользователя нет, то account['id']=0, в $account['why'] возможно лежит сообщение с причиной
+function getFullUniclustUserInfo()
+{
+	//что нужно для того, чтобы получить информацию пользователя Uniclust, под которым сейчас находится человек:
+	//1. смотрим, есть ли привязка в таблице uniclust_drupal_user_bindings в БД сущности Друпал (вообще, имеется ли такая запись)
+	//2. смотрим, совпадают ли ключи, которые в БД друпала и в БД Юникласта по привязке аккаунта (проверяется в SQL-запросе)
+	//3. смотрим, совпадают ли ключ айди данной сущности друпала (checkDrupalEntityKey) и айди сущности друпала,
+	//к которой относится пользователь в таблице всех пользователей uniclust'a (тоже проверяется в SQL-запросе в условии WHERE)
+	
+	//Пункт 1
+	$account['id'] = 0;
+	global $user;
+	//сначала проверяем, есть ли в таблице модуля (которая в БД друпала) запись с айдишником текущего пользователя друпал
+	//т.е. связан ли этот аккаунт Друпал с каким-то аккаунтом Юникласт
+	$nodes = db_select('uniclust_drupal_user_bindings', 'DB')
+	  ->fields('DB',array('uniclust_drupal_user_bundings_id','uniclust_key'))
+	  ->condition('DB.drupal_uid', $user->uid)
+	  ->execute();
+	$result = $nodes->rowCount();
+	if($result!=1) 
+	{
+		$account['why'] = 'No binding';
+		return $account;
+	}
+	$uniclust_key_of_current_drupal_user = $nodes->fetchAssoc()['uniclust_key'];
+	
+	//Пункт 3
+	$entity_answer = checkDrupalEntityKey();
+	if($entity_answer == NULL)
+	{
+		$account['why'] = 'Wrong drupal entity key';
+		return $account;
+	}
+	
+	//Пункт 2 + Пункт 3
+	$link = get_db_connection();
+	$query ="SELECT COUNT(uniclust_users_id) AS 'Count' FROM uniclust_users WHERE uniclust_users.key = '".$uniclust_key_of_current_drupal_user."' AND uniclust_users.id_drupal_entities = ".$entity_answer['id_drupal_entity'];
+	$result = mysqli_query($link, $query) or die("Ошибка выполнения запроса" . mysqli_error($link));
+	if($result)
+	{
+		$row = mysqli_fetch_array($result);
+		if($row['Count'] == 1)
+		{
+			$query ="SELECT * FROM uniclust_users WHERE uniclust_users.key = '".$uniclust_key_of_current_drupal_user."'";
+			$result = mysqli_query($link, $query) or die("Ошибка выполнения запроса" . mysqli_error($link));
+			$row = mysqli_fetch_array($result);
+			$account['id'] = $row['uniclust_users_id'];
+			$account['login'] = $row['login'];
+			$account['email'] = $row['email'];
+			$account['password_hash'] = $row['password'];
+			$account['full_user_name'] = $row['full_user_name'];
+			$account['date_of_registration'] = $row['date_of_registration'];
+			$account['id_rights'] = $row['id_rights'];
+			$account['key'] = $row['key'];
+			$account['id_drupal_entity'] = $row['id_drupal_entities'];
+		}
+		else if($row['Count'] == 0)
+		{
+			$account['id'] = 0;
+		}
+	}
+	mysqli_close($link);
+	return $account;
+}
+
+//Функция для проверки ключа сущности Drupal. Вернёт ключ этой (текущей) сущности, если ключ сущности друпала есть в юникласте и NULL - если нет.
+function checkDrupalEntityKey()
+{
+	$answer = NULL;
+	//Достаём ключ из бд Drupal'a
+	$nodes = db_select('drupal_key_for_uniclust','DB') -> fields('DB', array('unique_key')) -> execute();
+	if($nodes -> rowCount() != 1) return NULL;
+	$key = $nodes -> fetchAssoc()['unique_key'];
+	//Подключаемся к юникласту и вызываем процедуру, которая нам отвечает, есть такой ключ, или нет
+	$link = get_db_connection();
+	$query = "CALL `isThereSuchKeyOfDrupalEntity`('".$key."')";
+	$result = mysqli_query($link, $query);
+	if($result)
+	{
+		$row = mysqli_fetch_array($result);
+		if($row['Answer'] == 'YES')
+		{
+			$answer['entity_key'] = $key;
+			$answer['id_drupal_entity'] = $row['drupal_entities_id'];
+		}
+	}
+	mysqli_close($link);
+	return $answer;
+}
+
+
+
+
+

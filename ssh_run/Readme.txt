@@ -1,1 +1,1 @@
-Please modify "global_vars.py.example" and rename it by "global_vars.py"
+Please copy "uniclust.conf.example" to "uniclust.conf" and modify it.
