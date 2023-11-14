@@ -49,6 +49,8 @@ with sshtunnel.SSHTunnelForwarder(
 
     #sftp = paramiko.SFTPClient.from_transport(transport)
     b_size = sp_check()
+
+    print("Введите файлы и приоритеты в формате (('in.txt', 2), ('in2.txt', 1))")
     
     file_mas = eval(input())
     fd_loc = [open(i, "rb") for i, j in file_mas] 
