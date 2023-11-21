@@ -4,6 +4,7 @@ import time
 import socket
 import sshtunnel
 from multiprocessing import Process, Event, Array, RLock, Value
+from ctypes import c_bool
 
 def tunnel_connect(ip, username, password, port, remote_bind_address):
     tunnel = sshtunnel.SSHTunnelForwarder(
@@ -39,7 +40,7 @@ def fd_of_files_local(filename, flag = "rb"):
         filename = os.path.expanduser('~') + "/" + os.path.basename(filename)
     else:
         filename = os.path.abspath(filename)
-    
+
     return open(filename, flag)
 
 
@@ -57,11 +58,11 @@ def input_file():
     while s := input():
         try:
             vr = s.split()
-            fd = fd_of_file_local(vr[0])
+            fd = fd_of_files_local(vr[0])
             vr[1] = int(vr[1])
             vr_param.append(vr)
             fd.close()
-        except Exception:
+        except Exception as ex:
             print("Input is incorrect, try again")    
 
     return vr_param
@@ -79,7 +80,7 @@ def new_priority(file_priority, bitmask):
     pass
 
 
-def pre_file_upload(sftp, file_transport, lock, flag_calc, current_transfer):
+def pre_files_upload(sftp, file_transport, lock, flag_calc, current_transfer):
     fd_local = [fd_of_files_local(f_name[0]) for f_name in file_transport]
     fd_remote = [fd_of_files_remote(os.path.basename(f_name[0]), sftp, "wb") for f_name in file_transport]
     file_priority = [i[1] for i in file_transport]
@@ -96,6 +97,15 @@ def files_upload(file_priority, fd_local, fd_remote, lock, flag_calc, current_tr
     bitmask = [True for i in range(n)]
 
     while live_fd:
+        lock.acquire()
+
+        if flag_calc.value:
+            for i in range(n):
+                current_transfer[i] = fd_local.tell()
+        flag_calc.value = False
+
+        lock.release()
+
         for i in range(n):
             if not bitmask[i]:
                 continue
@@ -170,16 +180,28 @@ if __name__ == "__main__":
 
             buf_of_file_transport.append(vr_buf_trans)
 
-            buf_lock.append(multiprocessing.Rlock())
-            buf_flag_calc.append(Value("?", False))
+            buf_lock.append(RLock())
+            buf_flag_calc.append(Value(c_bool, False))
             buf_current_transfer.append(Array("Q", range(len(vr_buf_trans))))
 
-            buf_of_proc.append(Process(target=files_upload, \
-                args=(vr_buf_trans, buf_lock[-1], buf_flag_calc[-1], buf_current_transfer[-1], )))
+            buf_of_proc.append(Process(target=pre_files_upload, \
+                args=(sftp, vr_buf_trans, buf_lock[-1], buf_flag_calc[-1], buf_current_transfer[-1], )))
 
             buf_of_proc[-1].start()
         elif comma == 3:
-            pass
+            for i in range(len(buf_lock)):
+                lock[i].acquire()
+                buf_flag_calc[i].value = True
+                lock[i].release()
+
+                while True:
+                    lock[i].acquire()
+                    if buf_flag_cals[i].value == False:
+                        print(buf_current_transfer[i])
+                        break
+                    lock[i].release()
+
+
         elif comma == 4:
             pass
         else:
