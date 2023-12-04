@@ -1,4 +1,5 @@
 import os
+import sys
 import paramiko
 import time
 import socket
@@ -57,9 +58,12 @@ def sp_search(ip, username, password, port):
 
             for i in range(5):
                 t1 = time.time()
-
-                fd_test.write(a)
-                fd_test.flush()
+                
+                try:
+                    fd_test.write(a)
+                    fd_test.flush()
+                except:
+                    raise 
 
                 t2 = time.time()
                 cur_sp.append(len(a) / (t2 - t1))
@@ -92,13 +96,16 @@ def sp_search(ip, username, password, port):
     paramiko.sftp_file.SFTPFile.MAX_REQUEST_SIZE = sp_prev[1]
         
 
-def fd_of_files_local(filename, flag = "rb"):
+def fd_of_files_local(filename, flag = "rb", offset=0):
     if filename[0] == "~":
         filename = os.path.expanduser('~') + "/" + os.path.basename(filename)
     else:
         filename = os.path.abspath(filename)
 
-    return open(filename, flag)
+    fd = open(filename, flag)
+    fd.seek(offset)
+
+    return fd
 
 
 def get_size_name(filename):
@@ -110,9 +117,10 @@ def get_size_name(filename):
     return os.path.getsize(filename)
 
 
-def fd_of_files_remote(filename, sftp, flag = "rb"):
+def fd_of_files_remote(filename, sftp, flag = "rb", offset=0):
     fd_rem = sftp.file(filename, flag)
     fd_rem.set_pipelined(True)
+    fd_rem.seek(offset)
 
     return fd_rem
 
@@ -134,20 +142,43 @@ def input_file():
     return vr_param
 
 
+def input_file_re(fd_ch):
+    vr_param = []
+
+    while s := fd_ch.readline():
+        try:
+            vr = s.split()
+            fd = fd_of_files_local(vr[0])
+            vr[1] = int(vr[1])
+            vr_param.append(vr)
+            fd.close()
+        except Exception as ex:
+            return None    
+
+    return vr_param
+
+
 def close_all_files(fd):
     for fd_i in fd:
         fd_i.close()
 
 
 def new_priority(file_priority, bitmask):
-    pass
+    sum_all = sum(file_priority)
+    sum_live = sum([i * j for i, j in zip(file_priority, bitmask)])
+    
+    for i in range(len(file_priority)):
+        if bitmask[i]:
+            file_priority[i] += int((file_priority[i] / sum_live) * (sum_all - sum_live))
+        else:
+            file_priority[i] = 0
 
 
-def pre_files_upload(ip, username, password, port, file_transport, lock, flag_calc, current_transfer, num_proc):
+def pre_files_upload(ip, username, password, port, file_transport, lock, flag_calc, current_transfer, num_proc, offset):
     sftp = sftp_connect(ip, username, password, port)
 
-    fd_local = [fd_of_files_local(f_name[0]) for f_name in file_transport]
-    fd_remote = [fd_of_files_remote(os.path.basename(f_name[0]), sftp, "wb") for f_name in file_transport]
+    fd_local = [fd_of_files_local(f_name[0], offset=offset[i]) for i, f_name in enumerate(file_transport)]
+    fd_remote = [fd_of_files_remote(os.path.basename(f_name[0]), sftp, "wb", offset=offset[i]) for i, f_name in enumerate(file_transport)]
     file_priority = [i[1] for i in file_transport]
 
     files_upload(file_priority, fd_local, fd_remote, lock, flag_calc, current_transfer, num_proc)
@@ -176,10 +207,14 @@ def files_upload(file_priority, fd_local, fd_remote, lock, flag_calc, current_tr
         lock.release()
 
         if flag_w == 10:
+            lock.acquire()
+
             with open(f"cache_up/proc{num_proc}_offset.txt", "w") as fd:
                 for i in range(n):
                     print(fd_local[i].tell(), end=' ', file=fd)
             flag_w = 0
+
+            lock.release()
 
         for i in range(n):
             if not bitmask[i]:
@@ -197,6 +232,26 @@ def files_upload(file_priority, fd_local, fd_remote, lock, flag_calc, current_tr
                     new_priority(file_priority, bitmask)
                     break
         flag_w += 1
+    
+        with open(f"cache_up/proc{num_proc}_offset.txt", "w") as fd:
+            for i in range(n):
+                print(fd_local[i].tell(), end=' ', file=fd)
+
+
+def filling_up(vr_buf_trans, buf_of_file_transport_up, buf_of_proc_up, buf_lock_up, 
+               buf_flag_calc_up, buf_current_transfer_up, buf_size_of_file_up, offset):
+    buf_of_file_transport_up.append(vr_buf_trans)
+    buf_size_of_file_up.append([get_size_name(f_n[0]) for f_n in vr_buf_trans])
+
+    buf_lock_up.append(RLock())
+    buf_flag_calc_up.append(Value(c_bool, False))
+    buf_current_transfer_up.append(Array("Q", range(len(vr_buf_trans))))
+
+    buf_of_proc_up.append(Process(target=pre_files_upload, \
+        args=(ip, username, password, port, vr_buf_trans, buf_lock_up[-1], \
+        buf_flag_calc_up[-1], buf_current_transfer_up[-1], len(buf_lock_up) - 1, offset, )))
+
+    buf_of_proc_up[-1].start()
 
 
 if __name__ == "__main__":
@@ -211,25 +266,38 @@ if __name__ == "__main__":
         password = input("Password: ")
         try:
             tunnel = tunnel_connect(ip, username, password, port, (ip, 22)) 
-        except Exception:
-            print("Password is incorrect, try again")
+            tunnel.start()
+        except sshtunnel.BaseSSHTunnelForwarderError:
+            print("Unable to connect")
+            print("Want to try again?[y/n]")
+            pr = input()
+            if pr != 'y':
+                sys.exit()
         else:
             break
 
-    tunnel.start()
-
-    os.mkdir("cache_up")
-    os.mkdir("cache_down")
-
     print("Please wait, setting up")
-    sp_search(ip, username, password, port)
+    #sp_search(ip, username, password, port)
+
+    if not os.path.isdir("cache_up"):
+        os.mkdir("cache_up")
+    if not os.path.isdir("cache_down"):
+        os.mkdir("cache_down")
     
-    buf_of_file_transport = []        #имена и приоритеты
-    buf_of_proc = []                  #множество процессов
-    buf_lock = []                     #множество Rlock для каждого процесса
-    buf_flag_calc = []                #общая bool для вычисления offset
-    buf_current_transfer = []         #общая Array для значние offset
-    buf_size_of_file = []             #множество значений размеров файлов
+    buf_of_file_transport_up = []        #имена и приоритеты
+    buf_of_proc_up = []                  #множество процессов
+    buf_lock_up = []                     #множество Rlock для каждого процесса
+    buf_flag_calc_up = []                #общая bool для вычисления offset
+    buf_current_transfer_up = []         #общая Array для значние offset
+    buf_size_of_file_up = []             #множество значений размеров файлов
+
+    buf_of_file_transport_down = []        #имена и приоритеты
+    buf_of_proc_down = []                  #множество процессов
+    buf_lock_down = []                     #множество Rlock для каждого процесса
+    buf_flag_calc_down = []                #общая bool для вычисления offset
+    buf_current_transfer_down = []         #общая Array для значние offset
+    buf_size_of_file_down = []             #множество значений размеров файлов
+
 
     while True:
         print("Select a command:",
@@ -247,7 +315,7 @@ if __name__ == "__main__":
         while True:
             try:
                 comma = int(input())
-                if not (1 <= comma <= 5):
+                if not (1 <= comma <= 9):
                     raise ValueError
             except Exception:
                 print("Command is incorrect, try again")
@@ -255,59 +323,114 @@ if __name__ == "__main__":
                 break
 
         if comma == 1:
-            for procc in buf_of_proc:
+            for procc in buf_of_proc_up:
                 procc.join()
                 procc.terminate()
 
+            for procc in buf_of_proc_down:
+                procc.join()
+                procc.terminate()
+
+            for f_l in os.listdir("cache_up"):
+                os.remove(f"cache_up/{f_l}")
+
+            for f_l in os.listdir("cache_down"):
+                os.remove(f"cache_down/{f_l}")
+            
             os.rmdir("cache_up")
             os.rmdir("cache_down")
+            
             break
+
         elif comma == 2:
             vr_buf_trans = input_file() 
 
-            buf_of_file_transport.append(vr_buf_trans)
-            buf_size_of_file.append([get_size_name(f_n[0]) for f_n in vr_buf_trans])
+            with open(f"cache_up/proc{len(buf_lock_up)}_file.txt", "w") as fd:
+                for i in range(len(vr_buf_trans)):
+                    print(*vr_buf_trans[i], file=fd)
 
-            buf_lock.append(RLock())
-            buf_flag_calc.append(Value(c_bool, False))
-            buf_current_transfer.append(Array("Q", range(len(vr_buf_trans))))
+            with open(f"cache_up/proc{len(buf_lock_up)}_offset.txt", "w") as fd:
+                for i in range(len(vr_buf_trans)):
+                    print(0, end=' ', file=fd)
 
-            buf_of_proc.append(Process(target=pre_files_upload, \
-                args=(ip, username, password, port, vr_buf_trans, buf_lock[-1], \
-                buf_flag_calc[-1], buf_current_transfer[-1], len(buf_lock))))
+            buf_offset = [0] * len(vr_buf_trans) 
 
-            buf_of_proc[-1].start()
+            filling_up(vr_buf_trans, buf_of_file_transport_up, buf_of_proc_up, buf_lock_up, buf_flag_calc_up, \
+                       buf_current_transfer_up, buf_size_of_file_up, buf_offset)
+
         elif comma == 3:
-            for i in range(len(buf_lock)):
-                buf_lock[i].acquire()
-                buf_flag_calc[i].value = True
-                buf_lock[i].release()
+            for i in range(len(buf_lock_up)):
+                buf_lock_up[i].acquire()
+                buf_flag_calc_up[i].value = True
+                buf_lock_up[i].release()
+
+                buf_lock_up[i].acquire()
+                fd = open(f"cache_up/proc{i}_offset.txt", "r")
+                loc_offs = list(map(int, fd.readline().split()))
+                fd.close()
+                buf_lock_up[i].release()
 
                 while True:
-                    buf_lock[i].acquire()
-                    if buf_flag_calc[i].value == False:
-                        for ofs_i in range(len(buf_current_transfer[i])):
-                            print(f"{buf_of_file_transport[i][ofs_i][0]}: {buf_current_transfer[i][ofs_i]} / ", end='')
-                            print(f"{buf_size_of_file[i][ofs_i]} ", end='')
-                            print(f"{buf_current_transfer[i][ofs_i]/buf_size_of_file[i][ofs_i]:.2f}%")
-                        buf_lock[i].release()
+                    buf_lock_up[i].acquire()
+                    if buf_flag_calc_up[i].value == False:
+                        for ofs_i in range(len(buf_current_transfer_up[i])):
+                            print(f"{buf_of_file_transport_up[i][ofs_i][0]}: {buf_current_transfer_up[i][ofs_i]} / ", end='')
+                            print(f"{buf_size_of_file_up[i][ofs_i]} ", end='')
+                            print(f"{100 * buf_current_transfer_up[i][ofs_i]/buf_size_of_file_up[i][ofs_i]:.2f}%")
+                        buf_lock_up[i].release()
                         break
 
-                    if not buf_of_proc[i].is_alive():
-                        for ofs_i in range(len(buf_size_of_file[i])):
-                            print(f"{buf_of_file_transport[i][ofs_i][0]}: {buf_size_of_file[i][ofs_i]} / ", end='')
-                            print(f"{buf_size_of_file[i][ofs_i]} ", end='')
-                            print(f"100.00%")
-                        buf_lock[i].release()
+                    if not buf_of_proc_up[i].is_alive():
+                        for ofs_i in range(len(buf_size_of_file_up[i])):
+                            print(f"{buf_of_file_transport_up[i][ofs_i][0]}: {loc_offs[ofs_i]} / ", end='')
+                            print(f"{buf_size_of_file_up[i][ofs_i]} ", end='')
+                            print(f"{100 * loc_offs[ofs_i]/buf_size_of_file_up[i][ofs_i]:.2f}%")
+                        buf_lock_up[i].release()
                         break
 
-                    buf_lock[i].release()
-
+                    buf_lock_up[i].release()
 
         elif comma == 4:
             pass
-        else:
+        elif comma == 5:
             pass
+        elif comma == 6:
+            for proc in buf_of_proc_up:
+                proc.terminate()
+
+        elif comma == 7:
+            for proc in buf_of_proc_down:
+                proc.terminate()
+
+        elif comma == 8:
+            buf_of_file_transport_up = []        
+            buf_of_proc_up = []                  
+            buf_lock_up = []                     
+            buf_flag_calc_up = []                
+            buf_current_transfer_up = []         
+            buf_size_of_file_up = []  
+
+            num_proc = int(len(os.listdir("cache_up")) / 2)
+
+            for num in range(num_proc):
+                with open(f"cache_up/proc{num}_file.txt", "r") as fd:
+                    vr_buf_trans = input_file_re(fd)
+
+                with open(f"cache_up/proc{num}_offset.txt", "r") as fd:
+                    buf_offset = list(map(int, fd.readline().split()))
+                
+                filling_up(vr_buf_trans, buf_of_file_transport_up, buf_of_proc_up, buf_lock_up, \
+                           buf_flag_calc_up, buf_current_transfer_up, buf_size_of_file_up, buf_offset)
+
+        elif comma == 9:
+            buf_of_file_transport_down = []        
+            buf_of_proc_down = []                  
+            buf_lock_down = []                     
+            buf_flag_calc_down = []                
+            buf_current_transfer_down = []         
+            buf_size_of_file_down = []   
+
+            num_proc = int(len(os.listdir("cache_down")) / 2)
 
     tunnel.close()
 
