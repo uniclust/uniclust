@@ -310,12 +310,14 @@ if __name__ == "__main__":
         "7. Stop download", 
         "8. Restart upload",
         "9. Restart download",
-        "press 1,...,9", sep='\n')
+        "10. Show files on server", 
+        "11. Delete a file on the server",
+        "press 1,...,11", sep='\n')
 
         while True:
             try:
                 comma = int(input())
-                if not (1 <= comma <= 9):
+                if not (1 <= comma <= 11):
                     raise ValueError
             except Exception:
                 print("Command is incorrect, try again")
@@ -391,7 +393,15 @@ if __name__ == "__main__":
                     buf_lock_up[i].release()
 
         elif comma == 4:
-            pass
+            sftp = sftp_connect(ip, username, password, port)
+            print('-'*20)
+
+            for i in sftp.listdir():
+                if i[0] != '.':
+                    print(i) 
+
+            print('-'*20)
+            sftp.close()
         elif comma == 5:
             pass
         elif comma == 6:
@@ -431,6 +441,33 @@ if __name__ == "__main__":
             buf_size_of_file_down = []   
 
             num_proc = int(len(os.listdir("cache_down")) / 2)
+
+        elif comma == 10:
+            sftp = sftp_connect(ip, username, password, port)
+            print('-'*20)
+
+            for i in sftp.listdir():
+                if i[0] != '.':
+                    print(i) 
+            print('-'*20)
+
+            sftp.close()
+
+        elif comma == 11:
+            sftp = sftp_connect(ip, username, password, port)
+            buf_f_r = list(filter(lambda x: x[0] != '.', sftp.listdir()))
+
+            print('-'*20)
+
+            for f_r in buf_f_r:
+                print(f_r)
+
+            print('-'*20)
+
+            while f_r := input():
+                sftp.remove(f_r)
+
+            sftp.close()
 
     tunnel.close()
 
