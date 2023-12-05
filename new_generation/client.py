@@ -108,15 +108,6 @@ def fd_of_files_local(filename, flag = "rb", offset=0):
     return fd
 
 
-def get_size_name(filename):
-    if filename[0] == "~":
-        filename = os.path.expanduser('~') + "/" + os.path.basename(filename)
-    else:
-        filename = os.path.abspath(filename)
-    
-    return os.path.getsize(filename)
-
-
 def fd_of_files_remote(filename, sftp, flag = "rb", offset=0):
     fd_rem = sftp.file(filename, flag)
     fd_rem.set_pipelined(True)
@@ -125,7 +116,20 @@ def fd_of_files_remote(filename, sftp, flag = "rb", offset=0):
     return fd_rem
 
 
-def input_file():
+def get_size_name_local(filename):
+    if filename[0] == "~":
+        filename = os.path.expanduser('~') + "/" + os.path.basename(filename)
+    else:
+        filename = os.path.abspath(filename)
+    
+    return os.path.getsize(filename)
+
+
+def get_size_name_remote(sftp, filename):
+    return sftp.lstat(filename).st_size
+
+
+def input_file_local():
     print("Enter the name/path to the files and their priorities")
     vr_param = []
 
@@ -142,7 +146,24 @@ def input_file():
     return vr_param
 
 
-def input_file_re(fd_ch):
+def input_file_remote(sftp):
+    print("Enter the name/path to the files and their priorities")
+    vr_param = []
+
+    while s := input():
+        try:
+            vr = s.split()
+            fd = fd_of_files_remote(vr[0], sftp)
+            vr[1] = int(vr[1])
+            vr_param.append(vr)
+            fd.close()
+        except:
+            print("Input is incorrect, try again")    
+
+    return vr_param
+
+
+def input_file_local_re(fd_ch):
     vr_param = []
 
     while s := fd_ch.readline():
@@ -153,6 +174,22 @@ def input_file_re(fd_ch):
             vr_param.append(vr)
             fd.close()
         except Exception as ex:
+            return None    
+
+    return vr_param
+
+
+def input_file_remote_re(fd_ch, sftp):
+    vr_param = []
+
+    while s := fd_ch.readline():
+        try:
+            vr = s.split()
+            fd = fd_of_files_remote(vr[0], sftp)
+            vr[1] = int(vr[1])
+            vr_param.append(vr)
+            fd.close()
+        except:
             return None    
 
     return vr_param
@@ -182,6 +219,21 @@ def pre_files_upload(ip, username, password, port, file_transport, lock, flag_ca
     file_priority = [i[1] for i in file_transport]
 
     files_upload(file_priority, fd_local, fd_remote, lock, flag_calc, current_transfer, num_proc)
+    
+    close_all_files(fd_local)
+    close_all_files(fd_remote)
+
+    sftp.close()
+
+
+def pre_files_download(ip, username, password, port, file_transport, lock, flag_calc, current_transfer, num_proc, offset):
+    sftp = sftp_connect(ip, username, password, port)
+
+    fd_remote = [fd_of_files_remote(f_name[0], sftp, "rb", offset=offset[i]) for i, f_name in enumerate(file_transport)]
+    fd_local = [fd_of_files_local(f_name[0], "wb", offset=offset[i]) for i, f_name in enumerate(file_transport)]
+    file_priority = [i[1] for i in file_transport]
+
+    files_download(file_priority, fd_remote, fd_local, lock, flag_calc, current_transfer, num_proc)
     
     close_all_files(fd_local)
     close_all_files(fd_remote)
@@ -238,10 +290,59 @@ def files_upload(file_priority, fd_local, fd_remote, lock, flag_calc, current_tr
                 print(fd_local[i].tell(), end=' ', file=fd)
 
 
+def files_download(file_priority, fd_remote, fd_local, lock, flag_calc, current_transfer, num_proc):
+    live_fd = len(fd_local)
+    n = live_fd
+
+    bitmask = [True for i in range(n)]
+    flag_w = 0
+
+    while live_fd:
+        lock.acquire()
+
+        if flag_calc.value:
+            for i in range(n):
+                current_transfer[i] = fd_local[i].tell()
+        flag_calc.value = False
+
+        lock.release()
+
+        if flag_w == 10:
+            lock.acquire()
+
+            with open(f"cache_down/proc{num_proc}_offset.txt", "w") as fd:
+                for i in range(n):
+                    print(fd_local[i].tell(), end=' ', file=fd)
+            flag_w = 0
+
+            lock.release()
+
+        for i in range(n):
+            if not bitmask[i]:
+                continue
+
+            for j in range(file_priority[i]):
+                chunk = fd_remote[i].read(paramiko.sftp_file.SFTPFile.MAX_REQUEST_SIZE - 128)
+                fd_local[i].write(chunk)
+
+                if not chunk:
+                    bitmask[i] = False
+                    live_fd -= 1
+
+                    new_priority(file_priority, bitmask)
+                    break
+        flag_w += 1
+    
+        with open(f"cache_down/proc{num_proc}_offset.txt", "w") as fd:
+            for i in range(n):
+                print(fd_local[i].tell(), end=' ', file=fd)
+
+
 def filling_up(vr_buf_trans, buf_of_file_transport_up, buf_of_proc_up, buf_lock_up, 
-               buf_flag_calc_up, buf_current_transfer_up, buf_size_of_file_up, offset):
+               buf_flag_calc_up, buf_current_transfer_up, buf_size_of_file_up, offset, \
+               ip, username, password, port):
     buf_of_file_transport_up.append(vr_buf_trans)
-    buf_size_of_file_up.append([get_size_name(f_n[0]) for f_n in vr_buf_trans])
+    buf_size_of_file_up.append([get_size_name_local(f_n[0]) for f_n in vr_buf_trans])
 
     buf_lock_up.append(RLock())
     buf_flag_calc_up.append(Value(c_bool, False))
@@ -252,6 +353,27 @@ def filling_up(vr_buf_trans, buf_of_file_transport_up, buf_of_proc_up, buf_lock_
         buf_flag_calc_up[-1], buf_current_transfer_up[-1], len(buf_lock_up) - 1, offset, )))
 
     buf_of_proc_up[-1].start()
+
+
+def filling_down(vr_buf_trans, buf_of_file_transport_down, buf_of_proc_down, buf_lock_down, 
+               buf_flag_calc_down, buf_current_transfer_down, buf_size_of_file_down, offset, \
+               ip, username, password, port):
+    buf_of_file_transport_down.append(vr_buf_trans)
+    
+    sftp = sftp_connect(ip, username, password, port)
+    buf_size_of_file_down.append([get_size_name_remote(sftp, f_n[0]) for f_n in vr_buf_trans])
+    sftp.close()
+    print(buf_size_of_file_down)
+
+    buf_lock_down.append(RLock())
+    buf_flag_calc_down.append(Value(c_bool, False))
+    buf_current_transfer_down.append(Array("Q", range(len(vr_buf_trans))))
+
+    buf_of_proc_down.append(Process(target=pre_files_download, \
+        args=(ip, username, password, port, vr_buf_trans, buf_lock_down[-1], \
+        buf_flag_calc_down[-1], buf_current_transfer_down[-1], len(buf_lock_down) - 1, offset, )))
+
+    buf_of_proc_down[-1].start()
 
 
 if __name__ == "__main__":
@@ -345,7 +467,7 @@ if __name__ == "__main__":
             break
 
         elif comma == 2:
-            vr_buf_trans = input_file() 
+            vr_buf_trans = input_file_local() 
 
             with open(f"cache_up/proc{len(buf_lock_up)}_file.txt", "w") as fd:
                 for i in range(len(vr_buf_trans)):
@@ -358,7 +480,7 @@ if __name__ == "__main__":
             buf_offset = [0] * len(vr_buf_trans) 
 
             filling_up(vr_buf_trans, buf_of_file_transport_up, buf_of_proc_up, buf_lock_up, buf_flag_calc_up, \
-                       buf_current_transfer_up, buf_size_of_file_up, buf_offset)
+                       buf_current_transfer_up, buf_size_of_file_up, buf_offset, ip, username, password, port)
 
         elif comma == 3:
             for i in range(len(buf_lock_up)):
@@ -401,9 +523,57 @@ if __name__ == "__main__":
                     print(i) 
 
             print('-'*20)
+
+            vr_buf_trans = input_file_remote(sftp) 
+
             sftp.close()
+
+            with open(f"cache_down/proc{len(buf_lock_down)}_file.txt", "w") as fd:
+                for i in range(len(vr_buf_trans)):
+                    print(*vr_buf_trans[i], file=fd)
+
+            with open(f"cache_down/proc{len(buf_lock_down)}_offset.txt", "w") as fd:
+                for i in range(len(vr_buf_trans)):
+                    print(0, end=' ', file=fd)
+
+            buf_offset = [0] * len(vr_buf_trans) 
+
+            filling_down(vr_buf_trans, buf_of_file_transport_down, buf_of_proc_down, buf_lock_down, \
+                         buf_flag_calc_down, buf_current_transfer_down, buf_size_of_file_down, buf_offset, \
+                         ip, username, password, port)            
+
         elif comma == 5:
-            pass
+            for i in range(len(buf_lock_down)):
+                buf_lock_down[i].acquire()
+                buf_flag_calc_down[i].value = True
+                buf_lock_down[i].release()
+
+                buf_lock_down[i].acquire()
+                fd = open(f"cache_down/proc{i}_offset.txt", "r")
+                loc_offs = list(map(int, fd.readline().split()))
+                fd.close()
+                buf_lock_down[i].release()
+
+                while True:
+                    buf_lock_down[i].acquire()
+                    if buf_flag_calc_down[i].value == False:
+                        for ofs_i in range(len(buf_current_transfer_down[i])):
+                            print(f"{buf_of_file_transport_down[i][ofs_i][0]}: {buf_current_transfer_down[i][ofs_i]} / ", end='')
+                            print(f"{buf_size_of_file_down[i][ofs_i]} ", end='')
+                            print(f"{100 * buf_current_transfer_down[i][ofs_i]/buf_size_of_file_down[i][ofs_i]:.2f}%")
+                        buf_lock_down[i].release()
+                        break
+
+                    if not buf_of_proc_down[i].is_alive():
+                        for ofs_i in range(len(buf_size_of_file_down[i])):
+                            print(f"{buf_of_file_transport_down[i][ofs_i][0]}: {loc_offs[ofs_i]} / ", end='')
+                            print(f"{buf_size_of_file_down[i][ofs_i]} ", end='')
+                            print(f"{100 * loc_offs[ofs_i]/buf_size_of_file_down[i][ofs_i]:.2f}%")
+                        buf_lock_down[i].release()
+                        break
+
+                    buf_lock_down[i].release()
+
         elif comma == 6:
             for proc in buf_of_proc_up:
                 proc.terminate()
@@ -424,13 +594,14 @@ if __name__ == "__main__":
 
             for num in range(num_proc):
                 with open(f"cache_up/proc{num}_file.txt", "r") as fd:
-                    vr_buf_trans = input_file_re(fd)
+                    vr_buf_trans = input_file_local_re(fd)
 
                 with open(f"cache_up/proc{num}_offset.txt", "r") as fd:
                     buf_offset = list(map(int, fd.readline().split()))
                 
                 filling_up(vr_buf_trans, buf_of_file_transport_up, buf_of_proc_up, buf_lock_up, \
-                           buf_flag_calc_up, buf_current_transfer_up, buf_size_of_file_up, buf_offset)
+                           buf_flag_calc_up, buf_current_transfer_up, buf_size_of_file_up, buf_offset, \
+                           ip, username, password, port)
 
         elif comma == 9:
             buf_of_file_transport_down = []        
@@ -441,6 +612,19 @@ if __name__ == "__main__":
             buf_size_of_file_down = []   
 
             num_proc = int(len(os.listdir("cache_down")) / 2)
+
+            for num in range(num_proc):
+                sftp = sftp_connect(ip, username, password, port)
+                with open(f"cache_down/proc{num}_file.txt", "r") as fd:
+                    vr_buf_trans = input_file_remote_re(fd, sftp)
+                sftp.close()
+
+                with open(f"cache_down/proc{num}_offset.txt", "r") as fd:
+                    buf_offset = list(map(int, fd.readline().split()))
+                
+                filling_down(vr_buf_trans, buf_of_file_transport_down, buf_of_proc_down, buf_lock_down, \
+                           buf_flag_calc_down, buf_current_transfer_down, buf_size_of_file_down, buf_offset, \
+                           ip, username, password, port)
 
         elif comma == 10:
             sftp = sftp_connect(ip, username, password, port)
